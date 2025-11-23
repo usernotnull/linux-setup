@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#-------------------------------------------------------------------------------
+# Main Installation Script
+# Executes installation modules sequentially.
+#-------------------------------------------------------------------------------
+
+# Define colors for status messages
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Exit immediately if a command exits with a non-zero status or variable is unset.
+set -eu
+
+# Define the directory where modules are stored
+MODULES_DIR="./modules"
+
+# Ensure script is run with sudo permissions
+if [ "$EUID" -ne 0 ]; then
+  echo -e "${RED}❌ Please run the main script with sudo: sudo ./install.sh${NC}"
+  exit 1
+fi
+
+# Function to execute modules
+execute_modules() {
+  echo -e "${GREEN}🚀 Starting modular installation...${NC}"
+  
+  # Update package lists first
+  echo -e "${GREEN}🔄 Updating APT package lists...${NC}"
+  apt update
+  
+  for module in "$MODULES_DIR"/*.sh; do
+    if [ -f "$module" ]; then
+      echo -e "\n${GREEN}====================================================${NC}"
+      echo -e "${GREEN}▶️  Executing module: $(basename "$module")${NC}"
+      echo -e "${GREEN}====================================================${NC}"
+      
+      # Execute the module script
+      bash "$module"
+      
+      if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✅ Module $(basename "$module") completed successfully.${NC}"
+      else
+        echo -e "${RED}❌ Module $(basename "$module") failed. Aborting.${NC}"
+        exit 1
+      fi
+    fi
+  done
+  
+  echo -e "\n${GREEN}✨ All modules finished! System setup complete.${NC}"
+}
+
+# Run the main execution function
+execute_modules
+
+#-------------------------------------------------------------------------------
