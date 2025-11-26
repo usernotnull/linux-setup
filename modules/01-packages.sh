@@ -9,14 +9,15 @@ apt install -y \
   tlp \
   htop \
   workrave \
-  ibus-typing-booster \
   ffmpeg \
-  nvidia-cuda-toolkit \
-  nvidia-cudnn \
   imagemagick \
   flatpak \
-  software-properties-common \
   gparted \
+  stow \
   ufw
 
 echo "Core packages installation complete."
+
+#  ibus-typing-booster \
+#  nvidia-cuda-toolkit \
+#  nvidia-cudnn \

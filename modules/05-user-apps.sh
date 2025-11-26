@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Module to install user-specific applications and configurations.
+# Module to install all user-specific applications (Espanso, Flatpak apps, and fonts).
 
-echo "Starting user-specific application installation (Espanso, Emojis, and 8 Flatpak apps)..."
+echo "📦 Starting User Application Installations..."
 
 # Get the name of the original user who ran the sudo command
 TARGET_USER=${SUDO_USER:-$(whoami)}
@@ -9,13 +9,13 @@ TARGET_HOME=$(eval echo ~$TARGET_USER)
 
 # --- USER-SPECIFIC COMMAND EXECUTION ---
 su - "$TARGET_USER" -c "
-
   # --- ESPANSO INSTALLATION ---
   echo 'Installing Espanso AppImage...'
   mkdir -p $TARGET_HOME/opt
   wget -O $TARGET_HOME/opt/Espanso.AppImage 'https://github.com/espanso/espanso/releases/latest/download/Espanso-X11.AppImage'
   chmod u+x $TARGET_HOME/opt/Espanso.AppImage
-  $TARGET_HOME/opt/Espanso.AppImage env-path register
+  # The env-path registration requires sudo
+  sudo $TARGET_HOME/opt/Espanso.AppImage env-path register
   espanso service register
   espanso start
 
@@ -48,7 +48,7 @@ su - "$TARGET_USER" -c "
 
   # --- EMOJI FONT INSTALLATION ---
   echo 'Installing Twitter Color Emoji Font...'
-  wget -nv https://github.com/13rac1/twemoji-color-font/releases/download/v15.1.0/TwitterColorEmoji-SVGinOT-Linux-15.1.0.tar.gz
+  wget -nv https://github.com/13rac1/twemoji-color-font/releases/latest/download/TwitterColorEmoji-SVGinOT-Linux-15.1.0.tar.gz
   tar zxf TwitterColorEmoji-SVGinOT-Linux-15.1.0.tar.gz
   
   cd TwitterColorEmoji-SVGinOT-Linux-15.1.0
@@ -59,4 +59,4 @@ su - "$TARGET_USER" -c "
   rm -rf TwitterColorEmoji-SVGinOT-Linux-15.1.0 TwitterColorEmoji-SVGinOT-Linux-15.1.0.tar.gz
 "
 
-echo "User-specific applications installed and configured."
+echo "User application installation complete."
