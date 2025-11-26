@@ -4,6 +4,7 @@
 echo "Installing core system packages..."
 
 apt install -y \
+  git \
   fonts-noto-color-emoji \
   fonts-symbola \
   tlp \
