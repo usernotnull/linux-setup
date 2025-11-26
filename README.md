@@ -32,7 +32,7 @@ sudo apt update && sudo apt install -y wget unzip && \
 # 2. Define variables
 USER="usernotnull" && REPO="linux-setup" && \
 # 3. Download, extract, and run the main script
-wget -q "[https://github.com/$](https://github.com/$){USER}/${REPO}/archive/main.zip" -O "${REPO}.zip" && \
+wget -q "[https://github.com/$](https://github.com/${USER}/${REPO}/archive/main.zip" -O "${REPO}.zip" && \
 unzip -q "${REPO}.zip" && \
 cd "${REPO}-main" && \
 sudo ./install.sh && \

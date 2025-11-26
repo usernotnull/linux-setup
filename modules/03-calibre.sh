@@ -8,6 +8,6 @@ echo "Installing Calibre via official installer script..."
 # We are already running the main script as sudo, but the Calibre script 
 # handles its own permissions checks (sudo -v) and execution flow.
 
-wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdin
+wget -qO- https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdin
 
 echo "Calibre installation complete."

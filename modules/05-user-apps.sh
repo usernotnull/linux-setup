@@ -12,7 +12,7 @@ su - "$TARGET_USER" -c "
   # --- ESPANSO INSTALLATION ---
   echo 'Installing Espanso AppImage...'
   mkdir -p $TARGET_HOME/opt
-  wget -O $TARGET_HOME/opt/Espanso.AppImage 'https://github.com/espanso/espanso/releases/latest/download/Espanso-X11.AppImage'
+  wget -qO $TARGET_HOME/opt/Espanso.AppImage 'https://github.com/espanso/espanso/releases/latest/download/Espanso-X11.AppImage'
   chmod u+x $TARGET_HOME/opt/Espanso.AppImage
   # The env-path registration requires sudo
   sudo $TARGET_HOME/opt/Espanso.AppImage env-path register
@@ -48,7 +48,7 @@ su - "$TARGET_USER" -c "
 
   # --- EMOJI FONT INSTALLATION ---
   echo 'Installing Twitter Color Emoji Font...'
-  wget -nv https://github.com/13rac1/twemoji-color-font/releases/latest/download/TwitterColorEmoji-SVGinOT-Linux-15.1.0.tar.gz
+  wget -q https://github.com/13rac1/twemoji-color-font/releases/latest/download/TwitterColorEmoji-SVGinOT-Linux-15.1.0.tar.gz
   tar zxf TwitterColorEmoji-SVGinOT-Linux-15.1.0.tar.gz
   
   cd TwitterColorEmoji-SVGinOT-Linux-15.1.0

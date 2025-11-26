@@ -6,14 +6,14 @@ echo "Installing Signal Desktop messenger..."
 # 1. Install official public software signing key:
 echo "Adding Signal Desktop signing key..."
 # Download and dearmor the key
-wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg
+wget -qO- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg
 # Install the key into the system keyrings directory
 cat signal-desktop-keyring.gpg | tee /usr/share/keyrings/signal-desktop-keyring.gpg > /dev/null
 
 # 2. Add the repository to the list of repositories:
 echo "Adding Signal Desktop repository source..."
 # Download the repository source file
-wget -O signal-desktop.sources https://updates.signal.org/static/desktop/apt/signal-desktop.sources
+wget -qO signal-desktop.sources https://updates.signal.org/static/desktop/apt/signal-desktop.sources
 # Install the source file into the apt sources list directory
 cat signal-desktop.sources | tee /etc/apt/sources.list.d/signal-desktop.sources > /dev/null
 
