@@ -1,18 +1,35 @@
 #!/usr/bin/env bash
-# Module to install GitHub Desktop for Linux via the Shiftkey PPA.
+# Module to install GitHub Desktop via PPA. Runs as root.
 
-echo "Installing GitHub Desktop..."
+echo "Starting GitHub Desktop installation..."
 
-# 1. Get the @shiftkey package feed GPG key and add it to keyrings
-echo "Adding Shiftkey GPG key..."
-wget -qO - https://apt.packages.shiftkey.dev/gpg.key | gpg --dearmor | tee /usr/share/keyrings/shiftkey-packages.gpg > /dev/null
+# Package name for the check
+APP_PACKAGE="github-desktop"
 
-# 2. Add the repository to the sources list
-echo "Adding Shiftkey repository to sources.list.d..."
-sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/shiftkey-packages.gpg] https://apt.packages.shiftkey.dev/ubuntu/ any main" > /etc/apt/sources.list.d/shiftkey-packages.list'
+# 1. Check if package is already installed
+if dpkg -l | grep -q "^ii.*${APP_PACKAGE}"; then
+    echo "✅ GitHub Desktop is already installed. Skipping."
+    exit 0
+fi
 
-# 3. Update the package lists and install github-desktop
-echo "Updating package lists and installing github-desktop..."
-apt update && apt install -y github-desktop
+# 2. Add PPA if not already added (Checking for the MWT mirror domain)
+if ! grep -q "mirror.mwt.me" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
+    echo "Adding GitHub Desktop APT Repository (MWT Mirror)..."
+    
+    # 2a. Add the GPG key for the repository
+    # Fetches the key silently, de-armors it, and installs it to the keyrings directory.
+    wget -qO - https://mirror.mwt.me/shiftkey-desktop/gpgkey | gpg --dearmor | tee /usr/share/keyrings/mwt-desktop.gpg > /dev/null
+    
+    # 2b. Add the repository source list
+    # Uses dynamic architecture detection for broader compatibility.
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mwt-desktop.gpg] https://mirror.mwt.me/shiftkey-desktop/deb/ any main" | tee /etc/apt/sources.list.d/mwt-desktop.list >/dev/null
+else
+    echo "GitHub Desktop APT repository already configured (MWT Mirror). Skipping repository addition."
+fi
+
+# 3. Install the package
+echo "Updating package index silently and installing GitHub Desktop..."
+# apt update -qq is used for a silent update.
+apt update -qq && apt install -y "${APP_PACKAGE}"
 
 echo "GitHub Desktop installation complete."

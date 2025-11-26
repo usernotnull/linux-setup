@@ -5,6 +5,7 @@ echo "Installing core system packages..."
 
 apt install -y \
   git \
+  stow \
   fonts-noto-color-emoji \
   fonts-symbola \
   tlp \
@@ -14,7 +15,6 @@ apt install -y \
   imagemagick \
   flatpak \
   gparted \
-  stow \
   ufw
 
 echo "Core packages installation complete."

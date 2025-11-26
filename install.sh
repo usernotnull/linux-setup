@@ -27,7 +27,7 @@ execute_modules() {
   
   # Update package lists first
   echo -e "${GREEN}🔄 Updating APT package lists...${NC}"
-  apt update
+  apt update -qq
   
   for module in "$MODULES_DIR"/*.sh; do
     if [ -f "$module" ]; then

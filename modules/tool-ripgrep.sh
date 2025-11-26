@@ -3,12 +3,19 @@
 
 echo "Installing ripgrep (fast search tool)..."
 
+APP_PACKAGE="ripgrep"
+
+# 1. Check if package is already installed
+if dpkg -l | grep -q "^ii.*${APP_PACKAGE}"; then
+    echo "✅ ripgrep is already installed. Skipping."
+    exit 0
+fi
+
 # Define variables
 RIPGREP_REPO="BurntSushi/ripgrep"
 ARCH="amd64"
-DEB_FILE="ripgrep_*.deb"
 
-# 1. Fetch the URL for the latest stable .deb release
+# 2. Fetch the URL for the latest stable .deb release
 echo "Fetching latest ripgrep release URL for ${ARCH}..."
 LATEST_DEB_URL=$(curl -s "https://api.github.com/repos/${RIPGREP_REPO}/releases/latest" | \
   # Match only browser_download_url entries that END in .deb (not .deb.sha256)
@@ -23,7 +30,7 @@ if [ -z "$LATEST_DEB_URL" ]; then
     exit 1
 fi
 
-# 2. Download the package
+# 3. Download the package
 wget -q "$LATEST_DEB_URL"
 
 # Get the actual downloaded filename for dpkg
@@ -32,13 +39,14 @@ DOWNLOADED_FILE=$(basename "$LATEST_DEB_URL")
 # Ensure the filename ends with .deb (safety check)
 if [[ "${DOWNLOADED_FILE}" != *.deb ]]; then
   echo "❌ Expected a .deb package but got: ${DOWNLOADED_FILE} — aborting."
+  rm -f "$DOWNLOADED_FILE"
   exit 1
 fi
 
-# 3. Install the package using dpkg
-sudo dpkg -i "$DOWNLOADED_FILE"
+# 4. Install the package using dpkg
+dpkg -i "$DOWNLOADED_FILE"
 
-# 4. Clean up the downloaded .deb file
+# 5. Clean up the downloaded .deb file
 rm -f "$DOWNLOADED_FILE"
 
 echo "ripgrep installation complete."

@@ -28,7 +28,7 @@ To set up a new machine, use the following one-liner command to download, extrac
 
 ```bash
 # 1. Install prerequisites (if needed)
-sudo apt update && sudo apt install -y wget unzip && \
+sudo apt update -qq && sudo apt install -y wget unzip && \
 # 2. Define variables
 USER="usernotnull" && REPO="linux-setup" && \
 # 3. Download, extract, and run the main script

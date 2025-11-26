@@ -3,6 +3,12 @@
 
 echo "Installing Ollama for running large language models..."
 
+# Check if Ollama is already installed by looking for the executable
+if [ -f /usr/local/bin/ollama ]; then
+    echo "✅ Ollama is already installed. Skipping."
+    exit 0
+fi
+
 # The installation script handles setting up the system service automatically.
 curl -fsSL https://ollama.com/install.sh | sh
 
