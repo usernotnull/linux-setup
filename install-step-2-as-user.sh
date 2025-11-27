@@ -12,13 +12,19 @@ BASE_DIR="$HOME/GitHub"
 DOTFILES_DIR="$HOME/GitHub/dotfiles"
 REPO_URL="git@github.com:usernotnull/dotfiles.git"
 SSH_KEY_PATH="$HOME/.ssh/id_ed25519"
-USER_MODULES_DIR="./user-apps"
+USER_MODULES_DIR="$(dirname "$(readlink -f "$0")")/user-apps"
 
 # Define colors for status messages
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
+
+# $EUID is the Effective User ID. Root's ID is 0.
+if [ "$EUID" -eq 0 ]; then
+    echo -e "${RED}❌ This script must be run as a standard user, not as root or with sudo.${NC}"
+    exit 1  
+fi
 
 echo -e "${YELLOW}========================================================================${NC}"
 echo -e "${YELLOW}🔑 Starting User Configuration: SSH Key Setup and Dotfiles${NC}"
@@ -105,20 +111,17 @@ if $SUCCESSFUL_CONNECTION; then
         git clone "$REPO_URL" "$DOTFILES_DIR"
     fi
 
-    # Stow all non-hidden directories
     if [ -d "$DOTFILES_DIR" ]; then
-        cd "$DOTFILES_DIR"
+        # Stow all non-hidden directories
+        cd $DOTFILES_DIR
         for dir in */; do
-            case "$dir" in
-                .git/ | .*/ )
-                    continue
-                    ;;
-                */ )
-                    echo "Stowing $dir"
-                    stow --restow --verbose "$dir" 2>&1
-                    ;;
+            case \"\$dir\" in
+                .* | .*/ ) continue ;;
             esac
+            echo "Stowing $dir"
+            stow --restow --target="$HOME" "$dir"
         done
+
         echo -e "${GREEN}✅ Dotfiles Setup complete.${NC}"
     fi
 else

@@ -18,7 +18,7 @@ else
     echo "Downloading and installing font..."
     
     # Download the specific version
-    wget -nv https://github.com/13rac1/twemoji-color-font/releases/download/v${FONT_VERSION}/${TAR_FILE}
+    wget -nq https://github.com/13rac1/twemoji-color-font/releases/download/v${FONT_VERSION}/${TAR_FILE}
     
     # Check if download succeeded
     if [ ! -f "$TAR_FILE" ]; then

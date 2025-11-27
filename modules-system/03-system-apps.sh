@@ -11,7 +11,7 @@ NC='\033[0m' # No Color
 set -eu
 
 # The location of the modular app scripts relative to the install.sh base directory
-APPS_DIR="./modules/apps" 
+APPS_DIR="./modules-system/apps" 
 
 echo -e "${GREEN}📦 Starting Modular Root Application Installations...${NC}"
 
