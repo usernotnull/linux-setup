@@ -8,7 +8,6 @@ APP_IDS=(
   "org.audacityteam.Audacity"
   "org.videolan.VLC"
   "org.gnome.Rhythmbox3"
-  "com.visualstudio.code"
   "com.brave.Browser"
   "md.obsidian.Obsidian"
   "org.qbittorrent.qBittorrent"
@@ -27,12 +26,5 @@ for APP_ID in "${APP_IDS[@]}"; do
     flatpak install -y flathub "${APP_ID}"
   fi
 done
-
-# Run Obsidian once if installed (for configuration files)
-if flatpak info --installed md.obsidian.Obsidian >/dev/null 2>&1; then
-  echo "Running Obsidian once to set up user configuration..."
-  # Run in background to not block the script
-  flatpak run md.obsidian.Obsidian &
-fi
 
 echo 'Flatpak applications installed.'

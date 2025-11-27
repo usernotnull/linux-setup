@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 set -eu
 
 # Define the directory where main stage modules are stored
-MODULES_DIR="./modules"
+MODULES_DIR="./modules-system"
 
 # Ensure script is run with sudo permissions
 if [ "$EUID" -ne 0 ]; then
@@ -42,7 +42,8 @@ execute_modules() {
       bash "$module"
       
       if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅ Module $(basename "$module") completed successfully.${NC}"
+        # echo -e "${GREEN}✅ Module $(basename "$module") completed successfully.${NC}"
+        continue
       else
         echo -e "${RED}❌ Module $(basename "$module") failed. Aborting.${NC}"
         exit 1

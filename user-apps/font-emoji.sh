@@ -35,6 +35,7 @@ else
         
         # Refresh font cache
         fc-cache -f -v > /dev/null 2>&1
+
+        echo "Emoji Font installation complete."
     fi
 fi
-echo "Emoji Font installation complete."

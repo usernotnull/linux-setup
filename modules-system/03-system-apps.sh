@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Module to orchestrate the installation of all root-level applications and tools.
-# Runs every script found in the 'apps' subdirectory. Runs as root.
+# Runs every script found in the 'modules/apps' subdirectory. Runs as root.
 
-# Define colors (for consistency and in case they're not inherited)
+# Define colors
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
@@ -22,7 +22,6 @@ if [ ! -d "$APPS_DIR" ]; then
 fi
 
 # 2. Find and execute each script in the applications directory, sorted alphabetically
-# Execution order is based on filename (e.g., app-github-desktop.sh, tool-fastfetch.sh).
 for APP_SCRIPT in "$APPS_DIR"/*.sh; do
     
     # Check if the glob found actual files

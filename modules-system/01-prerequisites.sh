@@ -15,7 +15,9 @@ apt install -y \
   imagemagick \
   flatpak \
   gparted \
-  ufw
+  ufw \
+  curl \
+  wget
 
 echo "Core packages installation complete."
 
