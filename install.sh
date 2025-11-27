@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #-------------------------------------------------------------------------------
 # Main Installation Script
-# Executes installation modules sequentially.
+# Executes installation modules sequentially by finding and running all *.sh files
+# in the MODULES_DIR, ensuring execution order by sorting.
 #-------------------------------------------------------------------------------
 
 # Define colors for status messages
@@ -12,7 +13,7 @@ NC='\033[0m' # No Color
 # Exit immediately if a command exits with a non-zero status or variable is unset.
 set -eu
 
-# Define the directory where modules are stored
+# Define the directory where main stage modules are stored
 MODULES_DIR="./modules"
 
 # Ensure script is run with sudo permissions
@@ -29,7 +30,9 @@ execute_modules() {
   echo -e "${GREEN}🔄 Updating APT package lists...${NC}"
   apt update -qq
   
-  for module in "$MODULES_DIR"/*.sh; do
+  # Find all .sh files directly in MODULES_DIR, sort them (for 01-*, 02-*, etc. order), and execute.
+  find "$MODULES_DIR" -maxdepth 1 -type f -name "*.sh" | sort | while read -r module; do
+    
     if [ -f "$module" ]; then
       echo -e "\n${GREEN}====================================================${NC}"
       echo -e "${GREEN}▶️  Executing module: $(basename "$module")${NC}"
@@ -52,5 +55,4 @@ execute_modules() {
 
 # Run the main execution function
 execute_modules
-
 #-------------------------------------------------------------------------------
