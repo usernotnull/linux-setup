@@ -26,6 +26,16 @@ fi
 
 # 3. Update the package lists and install syncthing
 echo "Updating package lists and installing syncthing..."
-apt update -qq && install -y "${APP_PACKAGE}"
+apt update -qq && apt install -y "${APP_PACKAGE}"
+
+echo '========================================================================'
+echo '‼️ ACTION REQUIRED: Add your device to the sync network'
+echo 'Visit: http://127.0.0.1:8384/'
+echo 'Settings: Enable ONLY local discovery'
+echo 'Add devices using format tcp://x.x.x.x:22000, etc…'
+echo 'When done, press [ENTER] to continue the script.'
+echo '========================================================================'
+
+read -r PAUSE
 
 echo "Syncthing installation complete."

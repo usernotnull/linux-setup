@@ -3,15 +3,22 @@
 
 set -euo pipefail
 
+# 1. Add Flathub remote (user scope) if it doesn't exist
+# This ensures the user has access to the repository even if not added system-wide
+flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
 # --- FLATPAK APPLICATION INSTALLATIONS ---
+# List of standard apps to install
 APP_IDS=(
   "org.audacityteam.Audacity"
   "org.videolan.VLC"
   "org.gnome.Rhythmbox3"
-  "com.brave.Browser"
   "md.obsidian.Obsidian"
   "org.qbittorrent.qBittorrent"
   "com.github.dynobo.normcap"
+  # "org.keepassxc.KeePassXC"
+  "com.bitwarden.desktop"
+  "org.cryptomator.Cryptomator"
 )
 
 echo "Starting Flatpak Installations (Checking for existing installations)..."
@@ -23,7 +30,8 @@ for APP_ID in "${APP_IDS[@]}"; do
   else
     echo "Installing ${APP_ID}..."
     # -y is for non-interactive installation
-    flatpak install -y flathub "${APP_ID}"
+    # Using --user explicitly to force user-level installation
+    flatpak install --user -y flathub "${APP_ID}"
   fi
 done
 
