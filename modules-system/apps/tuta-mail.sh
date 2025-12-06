@@ -18,7 +18,7 @@ mkdir -p "$INSTALL_DIR"
 if [ -f "$APP_PATH" ]; then
     echo "✅ Tuta Mail AppImage already exists at $APP_PATH. Skipping download."
     exit 0
-else
+fi
 
 echo "Downloading Tuta Mail from $DOWNLOAD_URL..."
 wget -qO "$APP_PATH" "$DOWNLOAD_URL"

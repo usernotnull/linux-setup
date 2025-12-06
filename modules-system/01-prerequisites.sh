@@ -8,6 +8,7 @@ apt install -y \
   stow \
   fonts-noto-color-emoji \
   fonts-symbola \
+  ttf-bitstream-vera \
   tlp \
   htop \
   workrave \
