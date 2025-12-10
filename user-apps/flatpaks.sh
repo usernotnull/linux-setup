@@ -16,9 +16,13 @@ APP_IDS=(
   "md.obsidian.Obsidian"
   "org.qbittorrent.qBittorrent"
   "com.github.dynobo.normcap"
-  # "org.keepassxc.KeePassXC"
   "com.bitwarden.desktop"
+  "org.freeplane.App"
   "org.cryptomator.Cryptomator"
+  "org.gnome.meld"
+  "org.gimp.GIMP"
+  "org.kde.krita"
+  "org.kde.digikam"
 )
 
 echo "Starting Flatpak Installations (Checking for existing installations)..."

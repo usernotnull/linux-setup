@@ -10,9 +10,8 @@ TAR_FILE="TwitterColorEmoji-SVGinOT-Linux-${FONT_VERSION}.tar.gz"
 
 echo 'Installing Twitter Color Emoji Font...'
 
-# The install.sh script often creates a specific directory.
-# We check for a common artifact to determine idempotency.
-if [ -d "$FONT_DIR" ]; then
+# Check if the font file is already installed
+if [ -f "$HOME/.local/share/fonts/TwitterColorEmoji-SVGinOT.ttf" ]; then
     echo "✅ Twitter Emoji Font appears to be installed. Skipping."
 else
     echo "Downloading and installing font..."
