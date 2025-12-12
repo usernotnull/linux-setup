@@ -23,6 +23,7 @@ APP_IDS=(
   "org.gimp.GIMP"
   "org.kde.krita"
   "org.kde.digikam"
+  "com.belmoussaoui.Decoder"
 )
 
 echo "Starting Flatpak Installations (Checking for existing installations)..."

@@ -18,7 +18,8 @@ apt install -y \
   gparted \
   ufw \
   curl \
-  wget
+  wget \
+  exfatprogs
 
 echo "Core packages installation complete."
 
