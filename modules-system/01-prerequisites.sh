@@ -1,28 +1,32 @@
 #!/usr/bin/env bash
 # Module to install all core apt dependencies.
 
+# Exit immediately if a command exits with a non-zero status
+set -e
+
 echo "Installing core system packages..."
 
 apt install -y \
   git \
   stow \
-  fonts-noto-color-emoji \
-  fonts-symbola \
-  ttf-bitstream-vera \
-  tlp \
-  htop \
-  workrave \
-  ffmpeg \
-  imagemagick \
-  flatpak \
-  gparted \
-  ufw \
   curl \
   wget \
-  exfatprogs
+  htop \
+  gparted \
+  exfatprogs \
+  flatpak \
+  ufw \
+  nvidia-cuda-toolkit \
+  nvidia-cudnn \
+  workrave \
+  vlc \
+  ffmpeg \
+  imagemagick \
+  fonts-noto-color-emoji \
+  fonts-symbola \
+  ttf-bitstream-vera
 
 echo "Core packages installation complete."
 
 #  ibus-typing-booster \
-#  nvidia-cuda-toolkit \
-#  nvidia-cudnn \
+#  tlp \
