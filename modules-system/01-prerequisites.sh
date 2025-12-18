@@ -12,6 +12,7 @@ apt install -y \
   curl \
   wget \
   libfuse2 \
+  bind9-host \
   htop \
   gparted \
   exfatprogs \

@@ -26,9 +26,9 @@ if [ "$EUID" -eq 0 ]; then
     exit 1  
 fi
 
-echo -e "${YELLOW}========================================================================${NC}"
-echo -e "${YELLOW}🔑 Starting User Configuration: SSH Key Setup and Dotfiles${NC}"
-echo -e "${YELLOW}========================================================================${NC}"
+echo -e "${GREEN}========================================================================${NC}"
+echo -e "${GREEN}🔑 Starting User Configuration: SSH Key Setup and Dotfiles${NC}"
+echo -e "${GREEN}========================================================================${NC}"
 
 # 1. Start the ssh-agent immediately (needed for all subsequent ssh/git operations)
 echo -e "${GREEN}Starting SSH agent...${NC}"
@@ -56,8 +56,8 @@ if [ ! -f "$SSH_KEY_PATH" ]; then
   ssh-add "$SSH_KEY_PATH"
   
   if [ -s "${SSH_KEY_PATH}.pub" ]; then
-    echo -e "${RED}========================================================================${NC}"
-    echo -e "${RED}‼️ ACTION REQUIRED: GITHUB KEY REGISTRATION${NC}"
+    echo -e "${YELLOW}========================================================================${NC}"
+    echo -e "ACTION REQUIRED: GITHUB"
     echo '1. Copy the public key below:'
     cat "${SSH_KEY_PATH}.pub"
     
@@ -65,7 +65,7 @@ if [ ! -f "$SSH_KEY_PATH" ]; then
     echo '3. Click "New SSH key" (Type: Authentication Key) and paste the key.'
     
     echo '4. Once the key is registered on GitHub, press [ENTER] to continue and test the connection.'
-    echo -e "${RED}========================================================================${NC}"
+    echo -e "${YELLOW}========================================================================${NC}"
     read -r PAUSE
   else
     echo -e "${RED}❌ Fatal Error: Public key file (${SSH_KEY_PATH}.pub) is missing after generation. Aborting.${NC}"
@@ -133,9 +133,9 @@ else
 fi
 
 
-echo -e "\n${YELLOW}========================================================================${NC}"
-echo -e "${YELLOW}📦 Starting Modular User Application Installations...${NC}"
-echo -e "${YELLOW}========================================================================${NC}"
+echo -e "\n${GREEN}========================================================================${NC}"
+echo -e "${GREEN}📦 Starting Modular User Application Installations...${NC}"
+echo -e "${GREEN}========================================================================${NC}"
 
 if [ ! -d "$USER_MODULES_DIR" ]; then
     echo -e "${RED}❌ Error: User modules directory '$USER_MODULES_DIR' not found.${NC}"
@@ -151,6 +151,6 @@ else
     done
 fi
 
-echo -e "${YELLOW}========================================================================${NC}"
-echo -e "${YELLOW}🎉 User Configuration & Apps Finished.${NC}"
-echo -e "${YELLOW}========================================================================${NC}"
+echo -e "${GREEN}========================================================================${NC}"
+echo -e "${GREEN}🎉 User Configuration & Apps Finished.${NC}"
+echo -e "${GREEN}========================================================================${NC}"
