@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-echo "Starting Espanso (Wayland) SUDO installation (1/2)..."
+echo "Starting Espanso (Wayland) installation..."
 
 # 1. Check if Espanso is already installed
 if command -v espanso >/dev/null 2>&1; then
@@ -24,6 +24,5 @@ sudo setcap "cap_dac_override+p" $(which espanso) # https://espanso.org/docs/ins
 # 4. Clean up
 rm -f "$DOWNLOAD_FILE"
 
-echo 'Installation to be continued in user-apps...'
 echo 'Espanso installation complete.'
 
