@@ -33,5 +33,5 @@ echo '‼️ ACTION REQUIRED: Add the Sync Chain'
 echo 'Open Brave > Settings > Sync'
 echo '========================================================================'
 
-
+read -r PAUSE
 echo "Brave Browser installation complete."
