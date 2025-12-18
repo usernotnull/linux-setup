@@ -23,6 +23,10 @@ APP_IDS=(
   "org.kde.krita"
   "org.kde.digikam"
   "com.belmoussaoui.Decoder"
+  "com.getpostman.Postman"
+  "fr.handbrake.ghb"
+  "io.github.alainm23.planify"
+  "org.kde.kclock"
 )
 
 echo "Starting Flatpak Installations (Checking for existing installations)..."
