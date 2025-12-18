@@ -27,6 +27,7 @@ APP_IDS=(
   "fr.handbrake.ghb"
   "io.github.alainm23.planify"
   "org.kde.kclock"
+  "io.missioncenter.MissionCenter"
 )
 
 echo "Starting Flatpak Installations (Checking for existing installations)..."
