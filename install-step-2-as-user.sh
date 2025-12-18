@@ -110,9 +110,9 @@ if $SUCCESSFUL_CONNECTION; then
         git clone "$REPO_URL" "$DOTFILES_DIR"
     fi
 
-    rm -rf ~/.bash_logout ~/.bashrc
-
     if [ -d "$DOTFILES_DIR" ]; then
+        rm -rf ~/.bash_logout ~/.bashrc
+
         # Stow all non-hidden directories
         cd $DOTFILES_DIR
         for dir in */; do
@@ -124,6 +124,9 @@ if $SUCCESSFUL_CONNECTION; then
         done
 
         echo -e "${GREEN}✅ Dotfiles Setup complete.${NC}"
+
+        echo -e "\n${GREEN}Clearing fonts cache...${NC}"
+        fc-cache -f
     fi
 else
     echo -e "${RED}❌ Skipping Dotfiles clone because the SSH connection test failed.${NC}"
