@@ -11,7 +11,6 @@ flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/fl
 # List of standard apps to install
 APP_IDS=(
   "org.audacityteam.Audacity"
-  "org.videolan.VLC"
   "org.gnome.Rhythmbox3"
   "md.obsidian.Obsidian"
   "org.qbittorrent.qBittorrent"
