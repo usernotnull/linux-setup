@@ -24,16 +24,6 @@ sudo setcap "cap_dac_override+p" $(which espanso) # https://espanso.org/docs/ins
 # 4. Clean up
 rm -f "$DOWNLOAD_FILE"
 
-echo '========================================================================'
-echo '‼️ ACTION REQUIRED: Register & Start Espanso service as USER'
-echo 'Run the below command in another terminal:'
-echo '>>>'
-echo "espanso service register; espanso start"
-echo '<<<'
-echo 'When done, press [ENTER] to continue the script.'
-echo '========================================================================'
-
-read -r PAUSE
 echo 'Installation to be continued in user-apps...'
 echo 'Espanso installation complete.'
 

@@ -39,11 +39,4 @@ sed -i "s|Exec=kitty|Exec=$(readlink -f ~)/.local/kitty.app/bin/kitty|g" ~/.loca
 # Make xdg-terminal-exec (and hence desktop environments that support it use kitty)
 echo 'kitty.desktop' > ~/.config/xdg-terminals.list
 
-echo '========================================================================'
-echo '‼️ ACTION REQUIRED: Set Keyboard Shortcut'
-echo 'Add the below command as a keyboard shortcut:'
-which kitty
-echo 'When done, press [ENTER] to continue the script.'
-echo '========================================================================'
-
 echo "Kitty installation complete."

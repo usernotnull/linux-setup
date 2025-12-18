@@ -9,4 +9,3 @@ espanso service register
 espanso start
 
 echo 'Espanso installation complete.'
-

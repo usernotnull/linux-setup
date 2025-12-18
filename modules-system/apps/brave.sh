@@ -28,10 +28,4 @@ fi
 echo "Updating package database and installing brave-browser..."
 apt update -qq && apt install -y "${APP_PACKAGE}"
 
-echo '========================================================================'
-echo '‼️ ACTION REQUIRED: Add the Sync Chain'
-echo 'Open Brave > Settings > Sync'
-echo '========================================================================'
-
-read -r PAUSE
 echo "Brave Browser installation complete."

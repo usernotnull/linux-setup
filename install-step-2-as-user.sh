@@ -55,7 +55,6 @@ if [ ! -f "$SSH_KEY_PATH" ]; then
   echo 'Adding newly generated key to ssh-agent (enter passphrase if set):'
   ssh-add "$SSH_KEY_PATH"
   
-  # 3. ACTION REQUIRED block for NEW KEY
   if [ -s "${SSH_KEY_PATH}.pub" ]; then
     echo -e "${RED}========================================================================${NC}"
     echo -e "${RED}‼️ ACTION REQUIRED: GITHUB KEY REGISTRATION${NC}"

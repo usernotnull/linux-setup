@@ -21,12 +21,13 @@ To set up a new machine, use the following one-liner command to download, extrac
 sudo apt update -qq && sudo apt install -y wget unzip && \
 # 2. Define variables
 USER="usernotnull" && REPO="linux-setup" && \
-# 3. Download, extract, and run the main script
+# 3. Download and extract
 wget -q "https://github.com/${USER}/${REPO}/archive/main.zip" -O "${REPO}.zip" && \
 unzip -q "${REPO}.zip" && \
-cd "${REPO}-main" && \
-sudo ./install-step-1-as-sudo.sh && \
-./install-step-2-as-user.sh && \
-# 4. Cleanup
-cd .. && rm -rf "${REPO}-main" "${REPO}.zip"
+# 4. Run the scripts using absolute/relative paths
+sudo "./${REPO}-main/install-step-1-as-sudo.sh" && \
+"./${REPO}-main/install-step-2-as-user.sh" && \
+"./${REPO}-main/install-step-3.sh" && \
+# 5. Cleanup
+rm -rf "${REPO}-main" "${REPO}.zip"
 ```
