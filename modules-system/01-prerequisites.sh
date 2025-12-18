@@ -17,6 +17,7 @@ apt install -y \
   exfatprogs \
   flatpak \
   ufw \
+  eza \
   nvidia-cuda-toolkit \
   nvidia-cudnn \
   workrave \
