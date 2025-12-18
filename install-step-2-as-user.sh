@@ -111,6 +111,8 @@ if $SUCCESSFUL_CONNECTION; then
         git clone "$REPO_URL" "$DOTFILES_DIR"
     fi
 
+    rm -rf ~/.bash_logout ~/.bashrc
+
     if [ -d "$DOTFILES_DIR" ]; then
         # Stow all non-hidden directories
         cd $DOTFILES_DIR
