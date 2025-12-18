@@ -16,13 +16,13 @@ fi
 if [ ! -f "${REPO_FILE}" ]; then
     echo "Adding Signal Desktop signing key..."
     
-    # Download and dearmor the key
-    wget -qO- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > /usr/share/keyrings/signal-desktop-keyring.gpg
-    
-    # Add the repository to the list of repositories:
-    echo "Adding Signal Desktop repository source..."
-    # Download the repository source file and place it in sources.list.d
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main" | tee "${REPO_FILE}" > /dev/null
+    # 1. Install our official public software signing key:
+    wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg;
+    cat signal-desktop-keyring.gpg | sudo tee /usr/share/keyrings/signal-desktop-keyring.gpg > /dev/null
+
+    # 2. Add our repository to your list of repositories:
+    wget -O signal-desktop.sources https://updates.signal.org/static/desktop/apt/signal-desktop.sources;
+    cat signal-desktop.sources | sudo tee "${REPO_FILE}" > /dev/null
 else
     echo "Signal repository already configured. Skipping key and repo addition."
 fi

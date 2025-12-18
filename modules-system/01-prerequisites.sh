@@ -11,6 +11,7 @@ apt install -y \
   stow \
   curl \
   wget \
+  libfuse2 \
   htop \
   gparted \
   exfatprogs \
