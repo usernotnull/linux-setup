@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 set -eu
 
 # Define the directory where main stage modules are stored
-MODULES_DIR="./modules-system"
+MODULES_DIR="$(dirname "$(readlink -f "$0")")/modules-system"
 
 # Ensure script is run with sudo permissions
 if [ "$EUID" -ne 0 ]; then
