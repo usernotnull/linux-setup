@@ -11,7 +11,7 @@ apt install -y \
   stow \
   curl \
   wget \
-  libfuse2 \
+  libfuse2t64 \
   bind9-host \
   htop \
   gparted \
