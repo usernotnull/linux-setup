@@ -29,6 +29,7 @@ APP_IDS=(
   "org.kde.kclock"
   "io.missioncenter.MissionCenter"
   "io.dbeaver.DBeaverCommunity"
+  "org.gnome.Calculator"
 )
 
 echo "Starting Flatpak Installations (Checking for existing installations)..."
