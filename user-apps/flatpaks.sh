@@ -28,6 +28,7 @@ APP_IDS=(
   "io.github.alainm23.planify"
   "org.kde.kclock"
   "io.missioncenter.MissionCenter"
+  "io.dbeaver.DBeaverCommunity"
 )
 
 echo "Starting Flatpak Installations (Checking for existing installations)..."

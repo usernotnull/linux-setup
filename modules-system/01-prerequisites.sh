@@ -24,6 +24,7 @@ apt install -y \
   workrave \
   vlc \
   ffmpeg \
+  sqlite3 \
   imagemagick \
   fonts-noto-color-emoji \
   fonts-symbola \
