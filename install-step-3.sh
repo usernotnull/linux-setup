@@ -40,6 +40,15 @@ echo -e "${YELLOW}==============================================================
 
 read -r PAUSE
 
+echo -e "${YELLOW}========================================================================${NC}"
+echo 'ACTION REQUIRED: pCloud'
+echo 'Visit: https://www.pcloud.com/how-to-install-pcloud-drive-linux.html?download=electron-64'
+echo 'Download the pCloud AppImage, make it executable and run it.'
+echo 'When done, press [ENTER] to continue the script.'
+echo -e "${YELLOW}========================================================================${NC}"
+
+read -r PAUSE
+
 echo -e "${GREEN}========================================================================${NC}"
 echo -e "${GREEN}🎉 ALL DONE!${NC}"
 echo -e "${GREEN}========================================================================${NC}"
