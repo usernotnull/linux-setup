@@ -10,6 +10,7 @@ flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/fl
 # --- FLATPAK APPLICATION INSTALLATIONS ---
 # List of standard apps to install
 APP_IDS=(
+  "io.github.plrigaux.sysd-manager"
   "org.audacityteam.Audacity"
   "org.gnome.Rhythmbox3"
   "md.obsidian.Obsidian"

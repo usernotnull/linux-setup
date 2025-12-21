@@ -13,17 +13,15 @@ apt install -y \
   wget \
   libfuse2t64 \
   bind9-host \
-  htop \
-  gparted \
   exfatprogs \
   flatpak \
   ufw \
   eza \
-  nvidia-cuda-toolkit \
-  nvidia-cudnn \
   workrave \
   vlc \
   ffmpeg \
+  zstd \
+  pv \
   sqlite3 \
   imagemagick \
   fonts-noto-color-emoji \
@@ -32,5 +30,9 @@ apt install -y \
 
 echo "Core packages installation complete."
 
-#  ibus-typing-booster \
-#  tlp \
+  # nvidia-cuda-toolkit \
+  # nvidia-cudnn \
+  #  ibus-typing-booster \
+  #  tlp \
+  # gparted \
+  # htop \
