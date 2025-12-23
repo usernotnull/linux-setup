@@ -23,7 +23,7 @@ NC='\033[0m' # No Color
 # $EUID is the Effective User ID. Root's ID is 0.
 if [ "$EUID" -eq 0 ]; then
     echo -e "${RED}❌ This script must be run as a standard user, not as root or with sudo.${NC}"
-    exit 1  
+    exit 1
 fi
 
 echo -e "${GREEN}========================================================================${NC}"
@@ -38,15 +38,15 @@ eval "$(ssh-agent -s)"
 # --- GITHUB SSH KEY SETUP ---
 echo 'Checking GitHub SSH Key...'
 
-# Check if the key needs to be generated 
+# Check if the key needs to be generated
 if [ ! -f "$SSH_KEY_PATH" ]; then
-  
+
   # --- NEW KEY GENERATION FLOW (Now fully interactive) ---
   KEY_EMAIL=""
   while [ -z "${KEY_EMAIL}" ]; do
     read -rp "Enter email for SSH key (required): " KEY_EMAIL
   done
-  
+
   echo "Generating new ED25519 SSH key (${KEY_EMAIL})..."
   # ssh-keygen will now prompt for passphrase naturally in the user's TTY
   ssh-keygen -t ed25519 -C "${KEY_EMAIL}" -f "$SSH_KEY_PATH"
@@ -54,16 +54,16 @@ if [ ! -f "$SSH_KEY_PATH" ]; then
   # 2. Add the key to the agent
   echo 'Adding newly generated key to ssh-agent (enter passphrase if set):'
   ssh-add "$SSH_KEY_PATH"
-  
+
   if [ -s "${SSH_KEY_PATH}.pub" ]; then
     echo -e "${YELLOW}========================================================================${NC}"
     echo -e "ACTION REQUIRED: GITHUB"
     echo '1. Copy the public key below:'
     cat "${SSH_KEY_PATH}.pub"
-    
+
     echo '2. Visit https://github.com/settings/keys'
     echo '3. Click "New SSH key" (Type: Authentication Key) and paste the key.'
-    
+
     echo '4. Once the key is registered on GitHub, press [ENTER] to continue and test the connection.'
     echo -e "${YELLOW}========================================================================${NC}"
     read -r PAUSE
@@ -75,7 +75,7 @@ if [ ! -f "$SSH_KEY_PATH" ]; then
 else
   # --- EXISTING KEY FLOW ---
   echo -e "${GREEN}SSH key id_ed25519 already exists. Skipping generation.${NC}"
-  
+
   # Attempt to add the existing key.
   echo 'Attempting to add existing key to agent (enter passphrase if set, or press ENTER if none):'
   ssh-add "$SSH_KEY_PATH" || echo 'Could not add key (it may already be added or passphrase was invalid).'
@@ -132,7 +132,6 @@ else
     echo -e "${RED}❌ Skipping Dotfiles clone because the SSH connection test failed.${NC}"
 fi
 
-
 echo -e "\n${GREEN}========================================================================${NC}"
 echo -e "${GREEN}📦 Starting Modular User Application Installations...${NC}"
 echo -e "${GREEN}========================================================================${NC}"
@@ -154,3 +153,65 @@ fi
 echo -e "${GREEN}========================================================================${NC}"
 echo -e "${GREEN}🎉 User Configuration & Apps Finished.${NC}"
 echo -e "${GREEN}========================================================================${NC}"
+
+
+echo -e "\n${GREEN}========================================================================${NC}"
+echo -e "${GREEN}📦 Post-install INTERACTIVE configurations…${NC}"
+echo -e "${GREEN}========================================================================${NC}"
+
+
+echo -e "${YELLOW}========================================================================${NC}"
+echo 'ACTION REQUIRED: Whatsapp Web'
+echo 'Visit >>>'
+echo 'https://web.whatsapp.com/'
+echo '<<<'
+echo 'Install whatsapp web as a web PWA.'
+echo 'When done, press [ENTER] to continue the script.'
+echo -e "${YELLOW}========================================================================${NC}"
+
+read -r PAUSE
+
+echo -e "${YELLOW}========================================================================${NC}"
+echo 'ACTION REQUIRED: SyncThing'
+echo 'Visit >>>'
+echo 'http://127.0.0.1:8384/'
+echo '<<<'
+echo 'Settings: Enable ONLY local discovery'
+echo 'Add devices using format tcp://x.x.x.x:22000, etc…'
+echo 'When done, press [ENTER] to continue the script.'
+echo -e "${YELLOW}========================================================================${NC}"
+
+read -r PAUSE
+
+echo -e "${YELLOW}========================================================================${NC}"
+echo 'ACTION REQUIRED: pCloud'
+echo 'Visit >>>'
+echo 'https://www.pcloud.com/how-to-install-pcloud-drive-linux.html?download=electron-64'
+echo '<<<'
+echo 'Download the pCloud AppImage, make it executable and run it.'
+echo 'When done, press [ENTER] to continue the script.'
+echo -e "${YELLOW}========================================================================${NC}"
+
+read -r PAUSE
+
+echo -e "${YELLOW}========================================================================${NC}"
+echo 'ACTION REQUIRED: AdGuard DNS'
+echo 'Open Network Settings'
+echo 'For each connection (ethernet, wireless), change the IPv4 and IPv6 settings:'
+echo 'Method: Automatic (DHCP) addresses only'
+echo 'DNS Servers: IPv4'
+echo '94.140.14.15, 94.140.15.16'
+echo 'DNS Servers: IPv6'
+echo '2a10:50c0::bad1:ff, 2a10:50c0::bad2:ff'
+echo 'Go to another terminal and run `sudo resolvectl flush-caches`'
+echo 'Finally, disconnect then reconnect the internet connection.'
+echo 'When done, press [ENTER] to continue the script.'
+echo -e "${YELLOW}========================================================================${NC}"
+
+read -r PAUSE
+
+echo -e "${GREEN}========================================================================${NC}"
+echo -e "${GREEN}🎉 Post-install INTERACTIVE configurations finished! ${NC}"
+echo -e "${GREEN}========================================================================${NC}"
+
+echo -e "\n\n${GREEN}🎉🎉🎉 ALL DONE 🎉🎉🎉${NC}"

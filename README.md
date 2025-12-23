@@ -17,17 +17,10 @@ This system separates installation, configuration, and user application setup in
 To set up a new machine, use the following one-liner command to download, extract, and execute the installation pipeline.
 
 ```bash
-# 1. Install prerequisites (if needed)
 sudo apt update -qq && sudo apt install -y wget unzip && \
-# 2. Define variables
-USER="usernotnull" && REPO="linux-setup" && \
-# 3. Download and extract
-wget -q "https://github.com/${USER}/${REPO}/archive/main.zip" -O "${REPO}.zip" && \
-unzip -q "${REPO}.zip" && \
-# 4. Run the scripts using absolute/relative paths
-sudo "./${REPO}-main/install-step-1-as-sudo.sh" && \
-"./${REPO}-main/install-step-2-as-user.sh" && \
-"./${REPO}-main/install-step-3.sh" && \
-# 5. Cleanup
-rm -rf "${REPO}-main" "${REPO}.zip"
+wget -q "https://github.com/usernotnull/linux-setup/archive/main.zip" -O "linux-setup.zip" && \
+unzip -q "linux-setup.zip" && \
+sudo "./linux-setup-main/install-step-1-as-sudo.sh" && \
+"./linux-setup-main/install-step-2-as-user.sh" && \
+rm -rf "linux-setup-main" "linux-setup.zip"
 ```
