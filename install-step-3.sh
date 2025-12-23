@@ -14,6 +14,17 @@ echo -e "${GREEN}🔑 Final Customizations...${NC}"
 echo -e "${GREEN}========================================================================${NC}"
 
 echo -e "${YELLOW}========================================================================${NC}"
+echo 'ACTION REQUIRED: Whatsapp Web'
+echo 'Visit >>>'
+echo 'https://web.whatsapp.com/'
+echo '<<<'
+echo 'Install whatsapp web as a web PWA.'
+echo 'When done, press [ENTER] to continue the script.'
+echo -e "${YELLOW}========================================================================${NC}"
+
+read -r PAUSE
+
+echo -e "${YELLOW}========================================================================${NC}"
 echo 'ACTION REQUIRED: Espanso'
 echo 'Run the below command in another terminal:'
 echo '>>>'
@@ -21,6 +32,8 @@ echo 'espanso service register && espanso start'
 echo '<<<'
 echo 'When done, press [ENTER] to continue the script.'
 echo -e "${YELLOW}========================================================================${NC}"
+
+read -r PAUSE
 
 echo -e "${YELLOW}========================================================================${NC}"
 echo 'ACTION REQUIRED: Brave'
@@ -32,7 +45,9 @@ read -r PAUSE
 
 echo -e "${YELLOW}========================================================================${NC}"
 echo 'ACTION REQUIRED: SyncThing'
-echo 'Visit: http://127.0.0.1:8384/'
+echo 'Visit >>>'
+echo 'http://127.0.0.1:8384/'
+echo '<<<'
 echo 'Settings: Enable ONLY local discovery'
 echo 'Add devices using format tcp://x.x.x.x:22000, etc…'
 echo 'When done, press [ENTER] to continue the script.'
@@ -42,8 +57,26 @@ read -r PAUSE
 
 echo -e "${YELLOW}========================================================================${NC}"
 echo 'ACTION REQUIRED: pCloud'
-echo 'Visit: https://www.pcloud.com/how-to-install-pcloud-drive-linux.html?download=electron-64'
+echo 'Visit >>>'
+echo 'https://www.pcloud.com/how-to-install-pcloud-drive-linux.html?download=electron-64'
+echo '<<<'
 echo 'Download the pCloud AppImage, make it executable and run it.'
+echo 'When done, press [ENTER] to continue the script.'
+echo -e "${YELLOW}========================================================================${NC}"
+
+read -r PAUSE
+
+echo -e "${YELLOW}========================================================================${NC}"
+echo 'ACTION REQUIRED: AdGuard DNS'
+echo 'Open Network Settings'
+echo 'For each connection (ethernet, wireless), change the IPv4 and IPv6 settings:'
+echo 'Method: Automatic (DHCP) addresses only'
+echo 'DNS Servers: IPv4'
+echo '94.140.14.15, 94.140.15.16'
+echo 'DNS Servers: IPv6'
+echo '2a10:50c0::bad1:ff, 2a10:50c0::bad2:ff'
+echo 'Go to another terminal and run `sudo resolvectl flush-caches`'
+echo 'Finally, disconnect then reconnect the internet connection.'
 echo 'When done, press [ENTER] to continue the script.'
 echo -e "${YELLOW}========================================================================${NC}"
 
