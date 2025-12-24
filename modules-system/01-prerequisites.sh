@@ -17,6 +17,7 @@ apt install -y \
   flatpak \
   ufw \
   eza \
+  btop \
   workrave \
   vlc \
   ffmpeg \
