@@ -15,6 +15,11 @@
 #              - Selective path restoration
 #              - Progress indicators
 #              - Conflict detection and handling
+#
+# REQUIREMENTS:
+#   - zstd, tar, sqlite3
+#   - Optional: pv (for progress bars)
+#   - .bash_utils helper library
 #==============================================================================
 
 set -euo pipefail
@@ -22,7 +27,7 @@ set -euo pipefail
 # === CONFIGURATION ===
 
 # Root directory where backups are stored (must match backup.sh)
-BACKUP_ROOT_DIR="$HOME/.backups/home"
+BACKUP_ROOT_DIR="${HOME}/.backups"
 
 # Restore behavior for existing files
 # Options: "skip", "overwrite", "backup", "ask"
@@ -40,12 +45,14 @@ INTERACTIVE_MODE=false
 # Specific backup timestamp to restore (format: YYYYMMDD_HHMMSS)
 BACKUP_TIMESTAMP=""
 
-# === Helper Functions ===
+# === HELPER FUNCTIONS ===
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UTILS_PATH="$(cd "$SCRIPT_DIR/../" && pwd)/.bash_utils"
 
-if [ -f "$HOME/.bash_utils" ]; then
-    source "$HOME/.bash_utils"
+if [[ -f "$UTILS_PATH" ]]; then
+    source "$UTILS_PATH"
 else
-    echo "Error: .bash_utils not found!"
+    echo "❌ Error: .bash_utils not found at $UTILS_PATH"
     exit 1
 fi
 
@@ -63,7 +70,7 @@ command_exists() {
 
 # Format bytes to human readable
 format_bytes() {
-    local bytes=$1
+    local bytes="${1:-0}"
     if [ "$bytes" -lt 1024 ]; then
         echo "${bytes}B"
     elif [ "$bytes" -lt 1048576 ]; then
@@ -77,7 +84,11 @@ format_bytes() {
 
 # List available backups with details
 list_backups() {
-    local backups=($(find "$BACKUP_ROOT_DIR" -maxdepth 1 -type d -name "backup_*" | sort -r))
+    # Find directories safely
+    local backups=()
+    while IFS= read -r -d '' dir; do
+        backups+=("$dir")
+    done < <(find "$BACKUP_ROOT_DIR" -maxdepth 1 -type d -name "backup_*" -print0 | sort -z -r)
 
     if [ ${#backups[@]} -eq 0 ]; then
         warn "No backups found in $BACKUP_ROOT_DIR"
@@ -91,13 +102,27 @@ list_backups() {
 
     for i in "${!backups[@]}"; do
         local backup="${backups[$i]}"
-        local timestamp=$(basename "$backup" | sed 's/backup_//')
+        local timestamp
+        timestamp=$(basename "$backup" | sed 's/backup_//')
         local archive="$backup/backup.tar.zst"
         local db="$backup/metadata.db"
 
         if [ -f "$archive" ]; then
-            local size=$(stat -c%s "$archive" 2>/dev/null || stat -f%z "$archive")
-            local date_formatted=$(date -d "${timestamp:0:8} ${timestamp:9:2}:${timestamp:11:2}:${timestamp:13:2}" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "$timestamp")
+            local size
+            if stat --version >/dev/null 2>&1; then
+                size=$(stat -c%s "$archive")
+            else
+                size=$(stat -f%z "$archive")
+            fi
+
+            # Format date from timestamp YYYYMMDD_HHMMSS
+            local date_str="${timestamp:0:8} ${timestamp:9:2}:${timestamp:11:2}:${timestamp:13:2}"
+            local date_formatted
+            if date --version >/dev/null 2>&1; then
+                date_formatted=$(date -d "$date_str" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "$timestamp")
+            else
+                date_formatted=$(date -j -f "%Y%m%d %H:%M:%S" "$date_str" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "$timestamp")
+            fi
 
             printf "${CYAN}%2d)${NC} ${GREEN}%s${NC}\n" "$((i+1))" "$timestamp"
             printf "    📅 Date: %s\n" "$date_formatted"
@@ -105,8 +130,10 @@ list_backups() {
 
             # Show metadata if database exists
             if [ -f "$db" ]; then
-                local path_count=$(sqlite3 "$db" "SELECT COUNT(*) FROM backup_paths;" 2>/dev/null || echo "N/A")
-                local compression=$(sqlite3 "$db" "SELECT compression_ratio FROM backup_metadata ORDER BY id DESC LIMIT 1;" 2>/dev/null || echo "N/A")
+                local path_count
+                path_count=$(sqlite3 "$db" "SELECT COUNT(*) FROM backup_paths;" 2>/dev/null || echo "N/A")
+                local compression
+                compression=$(sqlite3 "$db" "SELECT compression_ratio FROM backup_metadata ORDER BY id DESC LIMIT 1;" 2>/dev/null || echo "N/A")
                 printf "    📂 Paths: %s\n" "$path_count"
                 [ "$compression" != "N/A" ] && printf "    🗜️  Ratio: %sx\n" "$compression"
             fi
@@ -119,7 +146,11 @@ list_backups() {
 
 # Interactive backup selection
 select_backup() {
-    local backups=($(find "$BACKUP_ROOT_DIR" -maxdepth 1 -type d -name "backup_*" | sort -r))
+    # Re-fetch backups for selection logic
+    local backups=()
+    while IFS= read -r -d '' dir; do
+        backups+=("$dir")
+    done < <(find "$BACKUP_ROOT_DIR" -maxdepth 1 -type d -name "backup_*" -print0 | sort -z -r)
 
     if [ ${#backups[@]} -eq 0 ]; then
         die "No backups found in $BACKUP_ROOT_DIR"
@@ -150,7 +181,7 @@ select_backup() {
 
 # Verify backup integrity
 verify_backup() {
-    local backup_dir="$1"
+    local backup_dir="${1:-}"
     local archive="$backup_dir/backup.tar.zst"
     local db="$backup_dir/metadata.db"
 
@@ -170,11 +201,13 @@ verify_backup() {
 
     # Verify checksum if database exists
     if [ -f "$db" ]; then
-        local stored_checksum=$(sqlite3 "$db" "SELECT checksum FROM backup_paths LIMIT 1;" 2>/dev/null || echo "")
+        local stored_checksum
+        stored_checksum=$(sqlite3 "$db" "SELECT checksum FROM backup_paths LIMIT 1;" 2>/dev/null || echo "")
 
         if [ -n "$stored_checksum" ]; then
             log "$ICON_VERIFY" "Verifying checksum..."
-            local current_checksum=$(sha256sum "$archive" | cut -d' ' -f1)
+            local current_checksum
+            current_checksum=$(sha256sum "$archive" | cut -d' ' -f1)
 
             if [ "$stored_checksum" = "$current_checksum" ]; then
                 success "$ICON_SUCCESS" "Checksum verified"
@@ -189,7 +222,7 @@ verify_backup() {
 
 # Show backup contents
 show_backup_contents() {
-    local backup_dir="$1"
+    local backup_dir="${1:-}"
     local manifest="$backup_dir/manifest.txt"
 
     if [ -f "$manifest" ]; then
@@ -204,7 +237,7 @@ show_backup_contents() {
 
 # Handle file conflicts
 handle_conflict() {
-    local file="$1"
+    local file="${1:-}"
 
     case "$CONFLICT_RESOLUTION" in
         skip)
@@ -240,6 +273,7 @@ handle_conflict() {
                     return 0
                     ;;
                 *)
+                    # Default to skip if invalid input
                     return 1
                     ;;
             esac
@@ -249,7 +283,7 @@ handle_conflict() {
 
 # Restore backup
 restore_backup() {
-    local backup_dir="$1"
+    local backup_dir="${1:-}"
     local archive="$backup_dir/backup.tar.zst"
 
     log "$ICON_EXTRACT" "Extracting archive..."
@@ -257,28 +291,35 @@ restore_backup() {
     if [ "$DRY_RUN" = true ]; then
         log "$ICON_FOLDER" "Would extract to: /"
         log "$ICON_FOLDER" "Archive contents:"
-        tar -tf <(zstd -d -c "$archive") | head -20
-        [ $(tar -tf <(zstd -d -c "$archive") | wc -l) -gt 20 ] && echo "... (more files)"
+        # Use process substitution to peek without extracting
+        tar -tf <(zstd -d -c "$archive") | head -n 20
+        # Check if there are more lines without consuming stream unnecessarily
+        if [ "$(tar -tf <(zstd -d -c "$archive") | wc -l)" -gt 20 ]; then
+             echo "... (more files)"
+        fi
         return 0
     fi
 
     # Create temporary directory for extraction
-    TEMP_EXTRACT_DIR=$(mktemp -d)
-    trap "rm -rf $TEMP_EXTRACT_DIR" EXIT
+    local temp_extract_dir
+    temp_extract_dir=$(mktemp -d) || die "Failed to create temp dir"
+    trap 'rm -rf "$temp_extract_dir"' EXIT
 
     # Extract archive
-    START_TIME=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
 
     if command_exists pv; then
-        zstd -d -c "$archive" 2>/dev/null | pv -N "Extracting" | tar -xf - -C "$TEMP_EXTRACT_DIR" 2>/dev/null
+        zstd -d -c "$archive" 2>/dev/null | pv -N "Extracting" | tar -xf - -C "$temp_extract_dir" 2>/dev/null
     else
-        zstd -d -c "$archive" 2>/dev/null | tar -xf - -C "$TEMP_EXTRACT_DIR" 2>/dev/null
+        zstd -d -c "$archive" 2>/dev/null | tar -xf - -C "$temp_extract_dir" 2>/dev/null
     fi
 
-    END_TIME=$(date +%s)
-    DURATION=$((END_TIME - START_TIME))
+    local end_time
+    end_time=$(date +%s)
+    local duration=$((end_time - start_time))
 
-    success "$ICON_SUCCESS" "Extraction completed in ${DURATION}s"
+    success "$ICON_SUCCESS" "Extraction completed in ${duration}s"
     echo
 
     # Move files to their original locations
@@ -288,18 +329,19 @@ restore_backup() {
     local restored_count=0
     local skipped_count=0
 
-    cd "$TEMP_EXTRACT_DIR"
+    # We must change directory to handle relative paths correctly
+    cd "$temp_extract_dir"
 
     # Find all files and directories, excluding the temp dir itself
     while IFS= read -r -d '' item; do
         # Skip if it's just "."
         [ "$item" = "." ] && continue
 
-        # Remove leading "./" if present
+        # Remove leading "./" if present for cleaner path handling
         item="${item#./}"
 
         local target="/$item"
-        local source="$TEMP_EXTRACT_DIR/$item"
+        local source="$temp_extract_dir/$item"
 
         if [ -d "$source" ]; then
             # Create directory if it doesn't exist
@@ -330,8 +372,11 @@ restore_backup() {
     done < <(find . -print0)
 
     # Clear the progress line
-    [ "$restored_count" -gt 0 ] && printf "\r%*s\r" 50 ""
+    if [ "$restored_count" -gt 0 ]; then
+         printf "\r%*s\r" 50 ""
+    fi
 
+    # Return to previous directory
     cd - > /dev/null
 
     echo
@@ -359,7 +404,7 @@ while [[ $# -gt 0 ]]; do
             if [[ "$1" =~ ^[0-9]{8}_[0-9]{6}$ ]]; then
                 BACKUP_TIMESTAMP="$1"
             else
-                die "Invalid argument: $1"
+                die "Invalid argument or timestamp format: $1"
             fi
             shift
             ;;

@@ -1,422 +1,312 @@
 #!/bin/bash
 #==============================================================================
-# DESCRIPTION: Creates compressed backups of specified directories with
-#              timestamp, checksum verification, and metadata tracking.
-#              Uses zstd for optimal compression speed/ratio balance.
+# DESCRIPTION: Creates compressed backups of specified directories using zstd.
+#              Generates a self-contained SQLite metadata database for each
+#              backup and manages retention of old archives.
 #
 # USAGE:       ./backup.sh [--dry-run]
 #
-# FEATURES:    - Incremental timestamp-based backups
-#              - SQLite metadata tracking with checksums
-#              - Parallel compression for performance
-#              - Progress indicators
-#              - Automatic backup rotation (keeps last N backups)
+# REQUIREMENTS:
+#   - Tools: tar, zstd, sqlite3, sha256sum, pv (optional, for progress bars)
+#   - .bash_utils helper library
 #
-# OUTPUT:      Creates backups in BACKUP_ROOT_DIR with structure:
-#              backup_YYYYMMDD_HHMMSS/
-#                ├── backup.tar.zst (compressed archive)
-#                ├── manifest.txt (file list)
-#                └── metadata.db (SQLite database)
+# NOTES:
+#   - Reads paths from $HOME/.backups/backup-paths.txt
+#   - Creates a template config file if one does not exist
+#   - Uses zstd level 3 by default (sweet spot for speed/ratio)
 #==============================================================================
 
 set -euo pipefail
 
 # === CONFIGURATION ===
+BACKUP_ROOT="${HOME}/.backups"           # Root directory for all backups
+CONFIG_FILE="${BACKUP_ROOT}/paths.txt"   # File containing paths to backup
+MAX_BACKUPS=5                            # Number of historical backups to keep
+COMPRESSION_LEVEL=3                      # zstd level (1-19). 3 is standard.
+DRY_RUN=false                            # Set to true via flag to preview
 
-# Root directory where all backups will be stored
-BACKUP_ROOT_DIR="$HOME/.backups/home"
+# === HELPER FUNCTIONS ===
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UTILS_PATH="$(cd "$SCRIPT_DIR/" && pwd)/.bash_utils"
 
-# Configuration file containing paths to backup (one per line)
-BACKUP_PATHS_FILE="$BACKUP_ROOT_DIR/backup-paths.txt"
-
-# Number of backups to keep (older ones will be deleted)
-MAX_BACKUPS=5
-
-# Compression level (1-19, higher = better compression but slower)
-# 3 is recommended for speed/size balance, 10+ for maximum compression
-COMPRESSION_LEVEL=3
-
-# Dry run mode - set to true to see what would be backed up without doing it
-DRY_RUN=false
-
-# === Helper Functions ===
-
-if [ -f "$HOME/.bash_utils" ]; then
-    source "$HOME/.bash_utils"
+if [[ -f "$UTILS_PATH" ]]; then
+    source "$UTILS_PATH"
 else
-    echo "Error: .bash_utils not found!"
+    echo "❌ Error: .bash_utils not found at $UTILS_PATH"
     exit 1
 fi
 
-# Additional icons
-ICON_BACKUP="💾"
-ICON_COMPRESS="🗜️"
-ICON_DATABASE="🗄️"
-ICON_CLOCK="⏱️"
-ICON_SELECT="👆"
+# Additional Icons
+ICON_DB="🗄️"
+ICON_ZIP="🗜️"
+ICON_TIME="⏱️"
 
-# Check if command exists
+# Check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Format bytes to human readable
-format_bytes() {
-    local bytes=$1
+# Convert bytes to human readable format
+human_size() {
+    local bytes="${1:-0}"
     if [ "$bytes" -lt 1024 ]; then
-        echo "${bytes}B"
+        echo "${bytes} B"
     elif [ "$bytes" -lt 1048576 ]; then
-        echo "$(( bytes / 1024 ))KB"
+        echo "$((bytes / 1024)) KB"
     elif [ "$bytes" -lt 1073741824 ]; then
-        echo "$(( bytes / 1048576 ))MB"
+        echo "$((bytes / 1048576)) MB"
     else
-        echo "$(( bytes / 1073741824 ))GB"
+        echo "$((bytes / 1073741824)) GB"
     fi
 }
 
-# Calculate directory size
+# Get directory size in bytes (portable)
 get_dir_size() {
-    local path="$1"
-    if [ -e "$path" ]; then
-        du -sb "$path" 2>/dev/null | cut -f1 || echo "0"
+    local dir="${1:-}"
+    if [ -d "$dir" ]; then
+        du -sb "$dir" 2>/dev/null | cut -f1 || echo "0"
     else
         echo "0"
     fi
 }
 
-# === Parse Arguments ===
-
-for arg in "$@"; do
-    case $arg in
-        --dry-run)
-            DRY_RUN=true
-            ;;
-        *)
-            die "Unknown argument: $arg"
-            ;;
-    esac
-done
-
-# === Header ===
-
-hr
-log "$ICON_START" "Starting System Backup"
-info "$ICON_BACKUP" "Backup destination: $BACKUP_ROOT_DIR"
-info "$ICON_COMPRESS" "Compression level:  $COMPRESSION_LEVEL"
-[ "$DRY_RUN" = true ] && warn "DRY RUN MODE - No files will be backed up"
-hr
-echo
-
-# === Validations ===
-
-# Check for required commands
-command_exists tar || die "tar is not installed"
-command_exists zstd || die "zstd is not installed. Install with: sudo apt install zstd"
-command_exists sqlite3 || die "sqlite3 is not installed. Install with: sudo apt install sqlite3"
-command_exists sha256sum || die "sha256sum is not installed"
-
-# Create backup root directory if it doesn't exist
-if [ ! -d "$BACKUP_ROOT_DIR" ]; then
-    mkdir -p "$BACKUP_ROOT_DIR"
-    log "$ICON_FOLDER" "Created backup root directory: $BACKUP_ROOT_DIR"
-fi
-
-# Create backup root directory if it doesn't exist
-if [ ! -d "$BACKUP_ROOT_DIR" ]; then
-    mkdir -p "$BACKUP_ROOT_DIR"
-    log "$ICON_FOLDER" "Created backup root directory: $BACKUP_ROOT_DIR"
-fi
-
-# Check if backup paths file exists, create template and wait for user
-while [ ! -f "$BACKUP_PATHS_FILE" ] || [ ! -s "$BACKUP_PATHS_FILE" ] || ! grep -qv '^[[:space:]]*\(#\|$\)' "$BACKUP_PATHS_FILE" 2>/dev/null; do
-    if [ ! -f "$BACKUP_PATHS_FILE" ]; then
-        log "$ICON_WARN" "Backup paths file not found. Creating template..."
-
-        cat > "$BACKUP_PATHS_FILE" <<EOF
-# Backup Paths Configuration
-# Add one path per line (lines starting with # are ignored)
-# Example paths:
-# $HOME/.var/app/org.gnome.Rhythmbox3
-# $HOME/Docker
-# $HOME/Pictures/Exported
-# $HOME/.config/obsidian
-
-EOF
-        success "$ICON_SUCCESS" "Created template: $BACKUP_PATHS_FILE"
-    elif [ ! -s "$BACKUP_PATHS_FILE" ] || ! grep -qv '^[[:space:]]*\(#\|$\)' "$BACKUP_PATHS_FILE" 2>/dev/null; then
-        warn "Backup paths file is empty or contains no valid paths"
+# Cleanup function for interruptions
+cleanup() {
+    if [ -n "${CURRENT_BACKUP_DIR:-}" ] && [ -d "$CURRENT_BACKUP_DIR" ]; then
+        if [ "$DRY_RUN" = false ]; then
+            warn "Interrupted. Cleaning up incomplete backup..."
+            rm -rf "$CURRENT_BACKUP_DIR"
+        fi
     fi
-
-    hr
-    echo
-    printf "${YELLOW}%b${NC} Please add paths to backup in:\n" "$ICON_WARN"
-    printf "   ${CYAN}%s${NC}\n" "$BACKUP_PATHS_FILE"
-    echo
-    printf "${YELLOW}%b${NC} Options:\n" "$ICON_WARN"
-    printf "   ${CYAN}1)${NC} Open file in nano editor\n"
-    printf "   ${CYAN}2)${NC} Retry (after editing manually)\n"
-    printf "   ${CYAN}3)${NC} Quit\n"
-    echo
-    printf "${CYAN}%b${NC} Choose option [1-3]: " "$ICON_SELECT"
-    read -r option </dev/tty
-    echo
-
-    case "$option" in
-        1)
-            if command_exists nano; then
-                nano "$BACKUP_PATHS_FILE"
-            else
-                warn "nano is not installed"
-            fi
-            ;;
-        2)
-            # Just retry - will check file again
-            ;;
-        3|q|Q)
-            log "$ICON_WARN" "Backup cancelled by user"
-            exit 0
-            ;;
-        *)
-            warn "Invalid option: $option"
-            ;;
-    esac
-    echo
-done
-
-success "$ICON_SUCCESS" "Found valid backup paths configuration"
-echo
-
-# Read backup paths from file
-BACKUP_PATHS=()
-while IFS= read -r line || [ -n "$line" ]; do
-    # Skip empty lines and comments
-    [[ "$line" =~ ^[[:space:]]*$ ]] && continue
-    [[ "$line" =~ ^[[:space:]]*# ]] && continue
-
-    # Add to array
-    BACKUP_PATHS+=("$line")
-done < "$BACKUP_PATHS_FILE"
-
-# Check if we have any paths
-if [ ${#BACKUP_PATHS[@]} -eq 0 ]; then
-    die "No paths configured in $BACKUP_PATHS_FILE"
-fi
-
-# Validate backup paths
-VALID_PATHS=()
-TOTAL_SIZE=0
-
-log "$ICON_SEARCH" "Validating backup paths from: $BACKUP_PATHS_FILE"
-echo
-
-for path in "${BACKUP_PATHS[@]}"; do
-    # Expand tilde
-    expanded_path="${path/#\~/$HOME}"
-
-    if [ -e "$expanded_path" ]; then
-        # Count files for better progress estimation
-        file_count=$(find "$expanded_path" -type f 2>/dev/null | wc -l)
-        size=$(get_dir_size "$expanded_path")
-        TOTAL_SIZE=$((TOTAL_SIZE + size))
-        VALID_PATHS+=("$expanded_path")
-        info "  ✓" "$(basename "$expanded_path") - $(format_bytes "$size") ($file_count files)"
-    else
-        warn "Path does not exist (skipping): $path"
-    fi
-done
-
-echo
-
-if [ ${#VALID_PATHS[@]} -eq 0 ]; then
-    die "No valid paths to backup!"
-fi
-
-info "$ICON_FOLDER" "Total data to backup: $(format_bytes "$TOTAL_SIZE")"
-echo
-
-# Confirm backup before proceeding (if not dry run and interactive terminal)
-if [ "$DRY_RUN" = false ] && [ -t 0 ]; then
-    hr
-    log "$ICON_BACKUP" "Ready to backup ${#VALID_PATHS[@]} paths ($(format_bytes "$TOTAL_SIZE"))"
-    printf "${CYAN}%b${NC} Continue with backup? [Y/n]: " "$ICON_SELECT"
-    read -r confirm
-    echo
-
-    if [ "$confirm" = "n" ] || [ "$confirm" = "N" ]; then
-        log "$ICON_WARN" "Backup cancelled by user"
-        exit 0
-    fi
-fi
-
-# === Setup Backup Directory ===
-
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-BACKUP_DIR="$BACKUP_ROOT_DIR/backup_$TIMESTAMP"
-ARCHIVE_NAME="backup.tar.zst"
-MANIFEST_NAME="manifest.txt"
-DB_NAME="metadata.db"
-
-if [ "$DRY_RUN" = false ]; then
-    mkdir -p "$BACKUP_DIR"
-    log "$ICON_FOLDER" "Created backup directory: $BACKUP_DIR"
-else
-    log "$ICON_FOLDER" "Would create: $BACKUP_DIR"
-fi
-
-# === Create Metadata Database ===
-
-create_metadata_db() {
-    local db_path="$1"
-
-    sqlite3 "$db_path" <<EOF
-CREATE TABLE IF NOT EXISTS backup_metadata (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp TEXT NOT NULL,
-    hostname TEXT NOT NULL,
-    username TEXT NOT NULL,
-    backup_size INTEGER NOT NULL,
-    compressed_size INTEGER,
-    compression_ratio REAL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS backup_paths (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    backup_id INTEGER NOT NULL,
-    original_path TEXT NOT NULL,
-    size INTEGER NOT NULL,
-    file_count INTEGER,
-    checksum TEXT,
-    FOREIGN KEY (backup_id) REFERENCES backup_metadata(id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_timestamp ON backup_metadata(timestamp);
-CREATE INDEX IF NOT EXISTS idx_backup_id ON backup_paths(backup_id);
-EOF
+    exit 130
 }
 
-# === Create Backup ===
+# === HEADER ===
+hr
+log "$ICON_START" "System Backup Utility"
+info "$ICON_FOLDER" "Backup Root: $BACKUP_ROOT"
+info "$ICON_ZIP" "Compression: zstd (Level $COMPRESSION_LEVEL)"
 
-if [ "$DRY_RUN" = false ]; then
-    log "$ICON_COMPRESS" "Creating compressed archive..."
-
-    ARCHIVE_PATH="$BACKUP_DIR/$ARCHIVE_NAME"
-    MANIFEST_PATH="$BACKUP_DIR/$MANIFEST_NAME"
-    DB_PATH="$BACKUP_DIR/$DB_NAME"
-
-    # Create manifest
-    printf "" > "$MANIFEST_PATH"
-    for path in "${VALID_PATHS[@]}"; do
-        echo "$path" >> "$MANIFEST_PATH"
-    done
-
-    # Create tar archive with progress
-    START_TIME=$(date +%s)
-
-    # Build tar command with proper path handling
-    TAR_PATHS=()
-    for path in "${VALID_PATHS[@]}"; do
-        # Remove leading slash for tar -C option
-        TAR_PATHS+=("${path#/}")
-    done
-
-    # Use tar with zstd compression, preserving permissions and timestamps
-    if command_exists pv && [ "$TOTAL_SIZE" -gt 0 ]; then
-        tar -cf - \
-            --preserve-permissions \
-            --numeric-owner \
-            -C / \
-            "${TAR_PATHS[@]}" 2>/dev/null | \
-            pv -s "$TOTAL_SIZE" -N "Compressing" | \
-            zstd -"$COMPRESSION_LEVEL" -T0 -q -o "$ARCHIVE_PATH" 2>/dev/null
-    else
-        # Fallback without progress bar
-        tar -cf - \
-            --preserve-permissions \
-            --numeric-owner \
-            -C / \
-            "${TAR_PATHS[@]}" 2>/dev/null | \
-            zstd -"$COMPRESSION_LEVEL" -T0 -q -o "$ARCHIVE_PATH" 2>/dev/null
+# Parse arguments
+for arg in "$@"; do
+    if [ "$arg" == "--dry-run" ]; then
+        DRY_RUN=true
+        warn "DRY RUN MODE ENABLED"
     fi
+done
+hr
+echo
 
-    END_TIME=$(date +%s)
-    DURATION=$((END_TIME - START_TIME))
+# === VALIDATIONS ===
+# Check dependencies
+command_exists tar || die "tar command not found"
+command_exists zstd || die "zstd not found. Install: sudo apt install zstd"
+command_exists sqlite3 || die "sqlite3 not found. Install: sudo apt install sqlite3"
 
-    success "$ICON_SUCCESS" "Archive created in ${DURATION}s"
-
-    # Get archive size
-    COMPRESSED_SIZE=$(stat -c%s "$ARCHIVE_PATH" 2>/dev/null || stat -f%z "$ARCHIVE_PATH")
-    COMPRESSION_RATIO=$(awk "BEGIN {printf \"%.2f\", $TOTAL_SIZE / $COMPRESSED_SIZE}")
-
-    info "$ICON_COMPRESS" "Original size:    $(format_bytes "$TOTAL_SIZE")"
-    info "$ICON_COMPRESS" "Compressed size:  $(format_bytes "$COMPRESSED_SIZE")"
-    info "$ICON_COMPRESS" "Compression ratio: ${COMPRESSION_RATIO}x"
-    echo
-
-    # Calculate checksum
-    log "$ICON_DATABASE" "Calculating checksums..."
-    ARCHIVE_CHECKSUM=$(sha256sum "$ARCHIVE_PATH" | cut -d' ' -f1)
-
-    # Create metadata database
-    create_metadata_db "$DB_PATH"
-
-    # Insert backup metadata
-    sqlite3 "$DB_PATH" <<EOF
-INSERT INTO backup_metadata (timestamp, hostname, username, backup_size, compressed_size, compression_ratio)
-VALUES ('$TIMESTAMP', '$(hostname)', '$(whoami)', $TOTAL_SIZE, $COMPRESSED_SIZE, $COMPRESSION_RATIO);
-EOF
-
-    BACKUP_ID=$(sqlite3 "$DB_PATH" "SELECT last_insert_rowid();")
-
-    # Insert path metadata
-    for path in "${VALID_PATHS[@]}"; do
-        size=$(get_dir_size "$path")
-        file_count=$(find "$path" -type f 2>/dev/null | wc -l || echo "0")
-
-        sqlite3 "$DB_PATH" <<EOF
-INSERT INTO backup_paths (backup_id, original_path, size, file_count, checksum)
-VALUES ($BACKUP_ID, '$path', $size, $file_count, '$ARCHIVE_CHECKSUM');
-EOF
-    done
-
-    success "$ICON_DATABASE" "Metadata database created"
-    echo
-else
-    log "$ICON_COMPRESS" "Would create archive with ${#VALID_PATHS[@]} paths"
-    log "$ICON_DATABASE" "Would create metadata database"
-    echo
+# Create root directory
+if [ ! -d "$BACKUP_ROOT" ]; then
+    mkdir -p "$BACKUP_ROOT" || die "Failed to create backup root: $BACKUP_ROOT"
+    success "$ICON_FOLDER" "Created backup root directory"
 fi
 
-# === Cleanup Old Backups ===
+# Handle Config File
+if [ ! -f "$CONFIG_FILE" ]; then
+    warn "Configuration file not found."
+    cat > "$CONFIG_FILE" <<EOF
+# Add paths to backup (one per line)
+# Lines starting with # are ignored
+# Example:
+# /home/$USER/Documents
+# /home/$USER/.ssh
+EOF
+    log "$ICON_SEARCH" "Created template at: $CONFIG_FILE"
+    die "Please edit the configuration file and run the script again."
+fi
 
-log "$ICON_CLEAN" "Managing backup retention..."
+# Validate Config File Content
+if [ ! -s "$CONFIG_FILE" ]; then
+    die "Configuration file is empty: $CONFIG_FILE"
+fi
 
-if [ "$DRY_RUN" = false ]; then
-    EXISTING_BACKUPS=($(find "$BACKUP_ROOT_DIR" -maxdepth 1 -type d -name "backup_*" | sort -r))
+# === MAIN LOGIC ===
 
-    if [ ${#EXISTING_BACKUPS[@]} -gt "$MAX_BACKUPS" ]; then
-        BACKUPS_TO_DELETE=("${EXISTING_BACKUPS[@]:$MAX_BACKUPS}")
+# 1. Read and Validate Source Paths
+# ---------------------------------
+log "$ICON_SEARCH" "Scanning backup paths..."
+VALID_PATHS=()
+TOTAL_SOURCE_SIZE=0
+FILE_COUNT=0
 
-        for backup in "${BACKUPS_TO_DELETE[@]}"; do
-            rm -rf "$backup"
-            info "$ICON_TRASH" "Removed old backup: $(basename "$backup")"
-        done
-    else
-        info "$ICON_CLEAN" "No old backups to remove (${#EXISTING_BACKUPS[@]}/$MAX_BACKUPS)"
+while IFS= read -r line || [ -n "$line" ]; do
+    # Trim whitespace
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+
+    # Skip comments and empty lines
+    if [[ "$line" =~ ^#.*$ ]] || [[ -z "$line" ]]; then
+        continue
     fi
-else
-    log "$ICON_CLEAN" "Would check for old backups to remove"
+
+    # Expand tilde if present
+    line="${line/#\~/$HOME}"
+
+    if [ -d "$line" ] || [ -f "$line" ]; then
+        size=$(get_dir_size "$line")
+        TOTAL_SOURCE_SIZE=$((TOTAL_SOURCE_SIZE + size))
+        VALID_PATHS+=("$line")
+        info "  ✓ Found: $line ($(human_size "$size"))"
+    else
+        warn "  ✕ Path not found (skipping): $line"
+    fi
+done < "$CONFIG_FILE"
+
+if [ ${#VALID_PATHS[@]} -eq 0 ]; then
+    die "No valid paths found to backup."
 fi
 
 echo
+info "📊" "Total size to process: $(human_size "$TOTAL_SOURCE_SIZE")"
+echo
 
-# === Summary ===
+# 2. Prepare Backup Directory
+# ---------------------------
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+CURRENT_BACKUP_DIR="$BACKUP_ROOT/backup_$TIMESTAMP"
+ARCHIVE_FILE="$CURRENT_BACKUP_DIR/backup.tar.zst"
+DB_FILE="$CURRENT_BACKUP_DIR/metadata.db"
+MANIFEST_FILE="$CURRENT_BACKUP_DIR/manifest.txt"
 
+# Register trap for cleanup only after we define the directory variable
+trap cleanup INT TERM
+
+if [ "$DRY_RUN" = true ]; then
+    log "$ICON_FOLDER" "[DRY RUN] Would create directory: $CURRENT_BACKUP_DIR"
+else
+    mkdir -p "$CURRENT_BACKUP_DIR" || die "Failed to create backup directory"
+fi
+
+# 3. Perform Backup (Compression)
+# -------------------------------
+START_TIME=$(date +%s)
+
+if [ "$DRY_RUN" = true ]; then
+    log "$ICON_ZIP" "[DRY RUN] Would compress ${#VALID_PATHS[@]} paths to $ARCHIVE_FILE"
+else
+    log "$ICON_ZIP" "Starting compression..."
+
+    # Create Manifest
+    printf "%s\n" "${VALID_PATHS[@]}" > "$MANIFEST_FILE"
+
+    # Prepare tar command arguments (handle absolute paths safely)
+    # We use -P (absolute names) cautiously, or -C / and strip leading slash.
+    # Here we use -C / and strip leading slash for safety/portability.
+    TAR_ARGS=()
+    for path in "${VALID_PATHS[@]}"; do
+        TAR_ARGS+=("${path#/}") # Strip leading slash
+    done
+
+    # Execute Pipeline
+    # tar -> pv (if exists) -> zstd -> disk
+    if command_exists pv; then
+        if ! tar -C / -cf - "${TAR_ARGS[@]}" 2>/dev/null | \
+             pv -s "$TOTAL_SOURCE_SIZE" | \
+             zstd -"$COMPRESSION_LEVEL" -T0 -q -o "$ARCHIVE_FILE"; then
+            die "Backup pipeline failed"
+        fi
+    else
+        log "$ICON_WARN" "pv not installed - progress bar disabled"
+        if ! tar -C / -cf - "${TAR_ARGS[@]}" 2>/dev/null | \
+             zstd -"$COMPRESSION_LEVEL" -T0 -q -o "$ARCHIVE_FILE"; then
+            die "Backup pipeline failed"
+        fi
+    fi
+
+    success "$ICON_SUCCESS" "Compression complete"
+fi
+
+DURATION=$(( $(date +%s) - START_TIME ))
+
+# 4. Generate Metadata & Checksums
+# --------------------------------
+if [ "$DRY_RUN" = true ]; then
+    log "$ICON_DB" "[DRY RUN] Would generate SQLite database and checksums"
+else
+    log "$ICON_DB" "Generating metadata..."
+
+    # Calculate Archive Checksum
+    ARCHIVE_HASH=$(sha256sum "$ARCHIVE_FILE" | cut -d' ' -f1)
+    ARCHIVE_SIZE=$(stat -c%s "$ARCHIVE_FILE" 2>/dev/null || stat -f%z "$ARCHIVE_FILE")
+
+    # Initialize SQLite DB
+    sqlite3 "$DB_FILE" <<EOF
+    CREATE TABLE backup_info (
+        id INTEGER PRIMARY KEY,
+        timestamp TEXT,
+        duration_seconds INTEGER,
+        total_size_bytes INTEGER,
+        archive_size_bytes INTEGER,
+        archive_hash TEXT
+    );
+    CREATE TABLE files (
+        id INTEGER PRIMARY KEY,
+        path TEXT,
+        type TEXT
+    );
+    INSERT INTO backup_info (timestamp, duration_seconds, total_size_bytes, archive_size_bytes, archive_hash)
+    VALUES ('$TIMESTAMP', $DURATION, $TOTAL_SOURCE_SIZE, $ARCHIVE_SIZE, '$ARCHIVE_HASH');
+EOF
+
+    # Insert paths into DB
+    for path in "${VALID_PATHS[@]}"; do
+        # Escape single quotes for SQL
+        safe_path="${path//\'/\'\'}"
+        sqlite3 "$DB_FILE" "INSERT INTO files (path, type) VALUES ('$safe_path', 'source_root');"
+    done
+
+    success "$ICON_DB" "Metadata saved to database"
+fi
+
+# 5. Rotate Old Backups
+# ---------------------
+log "$ICON_CLEAN" "Checking retention policy (Keep: $MAX_BACKUPS)..."
+
+# Find backup directories, sort reverse by name (timestamp), skip first N
+# We use a safe while-read loop with process substitution
+BACKUPS_REMOVED=0
+
+# Get list of backup directories sorted by name (timestamp) descending
+# We use 'ls -d' here cautiously as we control the directory names
+# A safer approach using find and sort:
+while IFS= read -r backup_dir; do
+    # Skip if we haven't exceeded the limit
+    # We need a counter.
+    if [ -z "${BACKUP_COUNT:-}" ]; then BACKUP_COUNT=0; fi
+    BACKUP_COUNT=$((BACKUP_COUNT + 1))
+
+    if [ "$BACKUP_COUNT" -gt "$MAX_BACKUPS" ]; then
+        if [ "$DRY_RUN" = true ]; then
+            warn "[DRY RUN] Would delete old backup: $(basename "$backup_dir")"
+        else
+            rm -rf "$backup_dir"
+            warn "Deleted old backup: $(basename "$backup_dir")"
+            BACKUPS_REMOVED=$((BACKUPS_REMOVED + 1))
+        fi
+    fi
+done < <(find "$BACKUP_ROOT" -maxdepth 1 -type d -name "backup_*" | sort -r)
+
+if [ "$BACKUPS_REMOVED" -eq 0 ]; then
+    info "$ICON_CLEAN" "No old backups needed removal."
+fi
+
+# === FOOTER ===
+echo
 hr
-success "$ICON_SUCCESS" "Backup completed successfully!"
-if [ "$DRY_RUN" = false ]; then
-    info "$ICON_BACKUP" "Backup location: $BACKUP_DIR"
-    info "$ICON_CLOCK" "Timestamp: $TIMESTAMP"
-    info "$ICON_DATABASE" "Paths backed up: ${#VALID_PATHS[@]}"
+if [ "$DRY_RUN" = true ]; then
+    success "$ICON_SUCCESS" "Dry run completed successfully"
+else
+    success "$ICON_SUCCESS" "Backup completed successfully"
+    info "$ICON_TIME" "Time taken: ${DURATION}s"
+    info "$ICON_ZIP" "Archive: $(basename "$ARCHIVE_FILE") ($(human_size "$ARCHIVE_SIZE"))"
+    info "$ICON_DB" "Metadata: $(basename "$DB_FILE")"
 fi
 hr

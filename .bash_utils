@@ -1,0 +1,51 @@
+# === COLORS & ICONS ===
+NC='\033[0m' # No Color
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+
+ICON_START="🚀"
+ICON_FOLDER="📂"
+ICON_CLEAN="🧹"
+ICON_SUCCESS="✅"
+ICON_WARN="⚠️"
+ICON_ERROR="❌"
+ICON_TRASH="🗑️"
+ICON_SEARCH="🔍"
+ICON_INFO="ℹ️"
+
+# === Helpers ===
+# $1 = Icon, $2 = Message
+log()     { printf "${CYAN}%b${NC} %s\n" "${1:-}" "${2:-}"; }
+info()    { printf "${BLUE}%b${NC} %s\n" "${1:-}" "${2:-}"; }
+success() { printf "${GREEN}%b %s${NC}\n" "${1:-}" "${2:-}"; }
+warn()    { printf "${YELLOW}%b WARNING: %s${NC}\n" "$ICON_WARN" "$*" >&2; }
+die()     { printf "${RED}%b ERROR: %s${NC}\n" "$ICON_ERROR" "$*" >&2; exit 1; }
+hr()      { printf "${BLUE}=================================================${NC}\n"; }
+
+# === Spinner Utility ===
+# $1 = PID of the background process, $2 = Message to display
+show_spinner() {
+    local pid=$1
+    local message=$2
+    local spin=( '⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏' )
+
+    # Hide the cursor for a cleaner look
+    tput civis
+
+    while kill -0 "$pid" 2>/dev/null; do
+        for i in "${spin[@]}"; do
+            printf "\r${CYAN}%s${NC} %s... ${BLUE}%s${NC}" "$ICON_START" "$message" "$i"
+            sleep 0.1
+        done
+    done
+
+    # Show the cursor again and clear the line
+    tput cnorm
+    printf "\r\033[K"
+}
+
+# Export variables so subshells can see them (optional but recommended)
+export NC RED GREEN BLUE YELLOW CYAN ICON_START ICON_FOLDER ICON_CLEAN ICON_SUCCESS ICON_WARN ICON_ERROR ICON_TRASH ICON_SEARCH ICON_INFO

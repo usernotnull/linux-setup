@@ -1,31 +1,124 @@
-#!/usr/bin/env bash
-# Module to install Syncthing via its official Debian repository.
+#!/bin/bash
+#==============================================================================
+# DESCRIPTION: Installs Syncthing via its official Debian repository
+#
+# USAGE:       sudo ./install-syncthing.sh
+#
+# REQUIREMENTS:
+#   - Root/sudo privileges
+#   - Debian-based system (Ubuntu, Debian, etc.)
+#   - curl must be available
+#   - Internet connection for package downloads
+#
+# NOTES:
+#   - Adds Syncthing's official stable-v2 repository
+#   - Skips installation if already installed
+#   - Safe to run multiple times (idempotent)
+#==============================================================================
 
-echo "Installing Syncthing for file synchronization..."
+set -euo pipefail
 
-APP_PACKAGE="syncthing"
-REPO_FILE="/etc/apt/sources.list.d/syncthing.list"
+# === CONFIGURATION ===
+APP_PACKAGE="syncthing"                                      # Package name to install
+REPO_FILE="/etc/apt/sources.list.d/syncthing.list"         # APT repository list file
+KEYRING_PATH="/etc/apt/keyrings/syncthing-archive-keyring.gpg"  # GPG keyring location
+REPO_URL="https://apt.syncthing.net/"                       # Repository URL
+KEYRING_URL="https://syncthing.net/release-key.gpg"        # GPG key URL
 
-# 1. Check if package is already installed
-if dpkg -l | grep -q "^ii.*${APP_PACKAGE}"; then
-    echo "✅ Syncthing is already installed. Skipping installation."
+# === HELPER FUNCTIONS ===
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UTILS_PATH="$(cd "$SCRIPT_DIR/../../" && pwd)/.bash_utils"
+
+if [[ -f "$UTILS_PATH" ]]; then
+    source "$UTILS_PATH"
+else
+    echo "❌ Error: .bash_utils not found at $UTILS_PATH"
+    exit 1
+fi
+
+ICON_PACKAGE="📦"
+ICON_KEY="🔑"
+ICON_UPDATE="🔄"
+
+# === HEADER ===
+hr
+log "$ICON_START" "Syncthing Installer"
+info "$ICON_PACKAGE" "Package: $APP_PACKAGE"
+info "$ICON_FOLDER" "Repository: $REPO_URL"
+hr
+echo
+
+# === VALIDATIONS ===
+# Check for root privileges
+if [ "$EUID" -ne 0 ]; then
+    die "This script must be run as root or with sudo"
+fi
+
+# Check for required commands
+command -v curl >/dev/null 2>&1 || die "curl command not found. Install it with: apt install curl"
+command -v apt >/dev/null 2>&1 || die "apt command not found. This script requires a Debian-based system"
+
+# === MAIN LOGIC ===
+
+# Check if package is already installed
+if dpkg -l | grep "^ii.*${APP_PACKAGE}" > /dev/null 2>&1; then
+    success "$ICON_SUCCESS" "Syncthing is already installed. Skipping installation."
     exit 0
 fi
 
-# 2. Add the release PGP keys and repository sources (only if repository file does not exist)
+# Add the release PGP keys and repository sources
 if [ ! -f "${REPO_FILE}" ]; then
-    echo "Adding Syncthing PGP key..."
-    mkdir -p /etc/apt/keyrings
-    curl -L -o /etc/apt/keyrings/syncthing-archive-keyring.gpg https://syncthing.net/release-key.gpg
+    log "$ICON_KEY" "Adding Syncthing PGP key..."
 
-    echo "Adding Syncthing stable-v2 repository to sources.list.d..."
-    echo "deb [signed-by=/etc/apt/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable-v2" | tee "${REPO_FILE}" >/dev/null
+    # Create keyrings directory if it doesn't exist
+    mkdir -p /etc/apt/keyrings
+
+    # Download GPG key
+    if curl -fsSL -o "$KEYRING_PATH" "$KEYRING_URL"; then
+        success "$ICON_KEY" "GPG key downloaded successfully"
+    else
+        die "Failed to download Syncthing GPG key from $KEYRING_URL"
+    fi
+
+    log "$ICON_FOLDER" "Adding Syncthing stable-v2 repository..."
+    if echo "deb [signed-by=$KEYRING_PATH] $REPO_URL syncthing stable-v2" > "${REPO_FILE}"; then
+        success "$ICON_FOLDER" "Repository configuration added"
+    else
+        die "Failed to create repository configuration file"
+    fi
 else
-    echo "Syncthing repository already configured. Skipping key and repo addition."
+    info "$ICON_FOLDER" "Syncthing repository already configured"
 fi
 
-# 3. Update the package lists and install syncthing
-echo "Updating package lists and installing syncthing..."
-apt update -qq && apt install -y "${APP_PACKAGE}"
+# Update package lists and install syncthing
+log "$ICON_UPDATE" "Updating package lists..."
+if apt update -qq; then
+    success "$ICON_UPDATE" "Package lists updated"
+else
+    die "Failed to update package lists"
+fi
 
-echo "Syncthing installation complete."
+log "$ICON_PACKAGE" "Installing $APP_PACKAGE..."
+if apt install -y "${APP_PACKAGE}"; then
+    success "$ICON_PACKAGE" "Package installed successfully"
+else
+    die "Failed to install $APP_PACKAGE"
+fi
+
+# Verify installation
+if command -v syncthing >/dev/null 2>&1; then
+    version=$(syncthing --version | head -n1 || echo "unknown")
+    success "$ICON_SUCCESS" "Syncthing installed successfully: $version"
+else
+    warn "Syncthing package installed but command not found in PATH"
+fi
+
+# === FOOTER ===
+echo
+hr
+success "$ICON_SUCCESS" "Syncthing installation complete!"
+info "💡" "Next steps:"
+info "   " "- Run 'syncthing' to start the service"
+info "   " "- Access web GUI at http://localhost:8384"
+info "   " "- Consider enabling as a systemd service"
+hr
