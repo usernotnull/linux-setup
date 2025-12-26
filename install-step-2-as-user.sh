@@ -225,10 +225,13 @@ wait_for_user
 # DNS
 warn "ACTION REQUIRED: AdGuard DNS"
 echo "Task: Open Network Settings -> IPv4/IPv6 Method: Automatic (DHCP)"
-echo "      IPv4 DNS: 94.140.14.15, 94.140.15.16"
-echo "      IPv6 DNS: 2a10:50c0::bad1:ff, 2a10:50c0::bad2:ff"
-echo "      Run: sudo resolvectl flush-caches"
-echo "      Action: Disconnect and Reconnect Internet"
+echo "      IPv4 DNS    : 94.140.14.15, 94.140.15.16"
+echo "      IPv6 DNS    : 2a10:50c0::bad1:ff, 2a10:50c0::bad2:ff"
+echo
+echo "      Run         : `sudo resolvectl flush-caches`"
+echo "      Action      : Disconnect and Reconnect Internet"
+echo "      Test        : `host pagead2.googlesyndication.com`"
+echo "                    Should return 0.0.0.0"
 wait_for_user
 
 # === FOOTER ===
