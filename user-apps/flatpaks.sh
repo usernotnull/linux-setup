@@ -41,6 +41,7 @@ APP_IDS=(
     "io.dbeaver.DBeaverCommunity"
     "org.gnome.Calculator"
     "it.mijorus.gearlever"
+    "it.mijorus.smile"
 )
 
 REMOTE_NAME="flathub"
