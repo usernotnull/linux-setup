@@ -22,7 +22,6 @@ set -euo pipefail
 APP_IDS=(
     "io.github.plrigaux.sysd-manager"
     "org.audacityteam.Audacity"
-    "org.gnome.Rhythmbox3"
     "md.obsidian.Obsidian"
     "org.qbittorrent.qBittorrent"
     "com.github.dynobo.normcap"
