@@ -19,7 +19,6 @@ apt install -y \
   eza \
   btop \
   workrave \
-  vlc \
   ffmpeg \
   zstd \
   pv \

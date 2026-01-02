@@ -1,11 +1,11 @@
 # Setup mimelist
 echo "Setting default file associations…"
 
-grep -E '^(audio/|video/)' /usr/share/mime/types | xargs xdg-mime default vlc.desktop
+grep -E '^(audio/|video/)' /usr/share/mime/types | xargs xdg-mime default org.kde.haruna.desktop
 grep -E '^(text/|application/(javascript|json|xml|x-shellscript|x-yaml|x-python|x-php|x-perl|x-ruby))' /usr/share/mime/types | xargs xdg-mime default code.desktop
 
 ## Directories
-APPS="code.desktop;vlc.desktop;"
+APPS="code.desktop;org.kde.haruna.desktop;"
 MIME="inode/directory"
 FILE="$HOME/.config/mimeapps.list"
 

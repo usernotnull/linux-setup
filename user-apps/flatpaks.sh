@@ -42,6 +42,9 @@ APP_IDS=(
     "org.gnome.Calculator"
     "it.mijorus.gearlever"
     "it.mijorus.smile"
+    "io.github.gillesdegottex.FMIT"
+    "com.github.tchx84.Flatseal"
+    "eu.betterbird.Betterbird"
 )
 
 REMOTE_NAME="flathub"
@@ -148,6 +151,11 @@ else
         die "Batch installation failed. Check internet connection or disk space."
     fi
 fi
+
+# === POST-INSTALL ===
+
+# Lollypop: give access to music on cloud
+flatpak override org.gnome.Lollypop --filesystem=~/pCloudDrive
 
 # === FOOTER ===
 hr
