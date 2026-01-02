@@ -66,17 +66,27 @@ if [ -n "${1:-}" ]; then
     TARGET_BASE="$1"
 else
     # Interactive prompt pattern from guidelines
-    read -r -p "Enter the target directory [current: $DEFAULT_BASE_DIR]: " input_dir
+    read -r -p "Enter the target directory [default: $DEFAULT_BASE_DIR]: " input_dir
     TARGET_BASE="${input_dir:-$DEFAULT_BASE_DIR}"
 fi
+
+# Expand tilde and resolve to absolute path
+TARGET_BASE="${TARGET_BASE/#\~/$HOME}"
+TARGET_BASE="$(cd "$(dirname "$TARGET_BASE")" 2>/dev/null && pwd)/$(basename "$TARGET_BASE")" || TARGET_BASE="$TARGET_BASE"
 
 # Create base directory if it doesn't exist
 if [ ! -d "$TARGET_BASE" ]; then
     if [ "$DRY_RUN" = true ]; then
         log "$ICON_FOLDER" "Would create directory: $TARGET_BASE"
     else
-        mkdir -p "$TARGET_BASE" || die "Failed to create directory: $TARGET_BASE"
-        success "$ICON_FOLDER" "Created directory: $TARGET_BASE"
+        read -r -p "Directory does not exist. Create $TARGET_BASE? [Y/n]: " create_choice
+        create_choice="${create_choice:-Y}"
+        if [[ "$create_choice" =~ ^[Yy] ]]; then
+            mkdir -p "$TARGET_BASE" || die "Failed to create directory: $TARGET_BASE"
+            success "$ICON_FOLDER" "Created directory: $TARGET_BASE"
+        else
+            die "Cannot proceed without target directory"
+        fi
     fi
 fi
 
@@ -87,29 +97,40 @@ echo
 # === MAIN LOGIC ===
 
 # Trap SIGINT for graceful exit during network operations
-trap 'echo; warn "Interrupted by user. Exiting..."; exit 130' INT
+trap 'echo; warn "Interrupted by user after processing $total_cloned/$((total_cloned + total_skipped)) repos"; exit 130' INT
 
 total_cloned=0
 total_skipped=0
+total_failed=0
+repo_count=0
 
 for repo_url in "${GIT_REPOS[@]}"; do
+    repo_count=$((repo_count + 1))
+
     # Extract repo name (e.g., 'coding' from '.../coding.git')
     # Using bash string manipulation instead of sed for performance/safety
     repo_name=$(basename "$repo_url" .git)
 
     clone_dir="$TARGET_BASE/$repo_name"
 
+    # Progress indicator
+    printf "${CYAN}[%d/%d]${NC} Processing: %s\n" "$repo_count" "${#GIT_REPOS[@]}" "$repo_name"
+
     # Check if directory exists
     if [ -d "$clone_dir" ]; then
         # Check if directory is empty
         # Using ls -A is safer than grep in set -e context for checking emptiness
         if [ -n "$(ls -A "$clone_dir" 2>/dev/null)" ]; then
-            # Directory exists and is NOT empty
-            info "$ICON_SKIP" "Skipping $repo_name: Directory exists and is not empty."
+            # Directory exists and is NOT empty - check if it's a git repo
+            if [ -d "$clone_dir/.git" ]; then
+                info "$ICON_SKIP" "Skipping $repo_name: Git repository already exists"
+            else
+                info "$ICON_SKIP" "Skipping $repo_name: Directory exists but is not a git repository"
+            fi
             total_skipped=$((total_skipped + 1))
             continue
         else
-            # Directory exists but is empty
+            # Directory exists but is empty - we can clone into it
             warn "Directory exists but is empty: $clone_dir"
         fi
     fi
@@ -117,18 +138,22 @@ for repo_url in "${GIT_REPOS[@]}"; do
     # Perform Clone
     if [ "$DRY_RUN" = true ]; then
         log "$ICON_DOWN" "Would clone $repo_name from $repo_url"
+        total_cloned=$((total_cloned + 1))
     else
         log "$ICON_DOWN" "Cloning $repo_name..."
 
         # We use || true logic or if statements to handle potential git errors gracefully
-        if git clone --quiet "$repo_url" "$clone_dir"; then
+        if git clone --quiet "$repo_url" "$clone_dir" 2>&1; then
             success "$ICON_SUCCESS" "Successfully cloned $repo_name"
             total_cloned=$((total_cloned + 1))
         else
-            warn "Failed to clone $repo_name. Check SSH keys/Network."
+            warn "Failed to clone $repo_name. Check SSH keys, network, or repository access."
+            total_failed=$((total_failed + 1))
             # We don't 'die' here so other repos can still attempt to download
         fi
     fi
+
+    echo  # Blank line between repos for readability
 
 done
 
@@ -136,7 +161,13 @@ done
 hr
 if [ "$DRY_RUN" = true ]; then
     success "$ICON_SUCCESS" "Dry run complete."
+    info "📊" "Summary: $total_cloned would be cloned, $total_skipped skipped"
 else
     success "$ICON_SUCCESS" "Operation complete."
-    info "📊" "Summary: $total_cloned cloned, $total_skipped skipped."
+    info "📊" "Summary: $total_cloned cloned, $total_skipped skipped, $total_failed failed"
+fi
+
+# Exit with non-zero if any repos failed to clone (but only in actual run)
+if [ "$DRY_RUN" = false ] && [ "$total_failed" -gt 0 ]; then
+    exit 1
 fi

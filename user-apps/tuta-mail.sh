@@ -9,15 +9,15 @@
 #   - Internet connection
 #
 # NOTES:
-#   - Installs to $HOME/opt by default.
+#   - Installs to $HOME/Applications by default.
 #   - Skips download if the file already exists.
 #==============================================================================
 
 set -euo pipefail
 
 # === CONFIGURATION ===
-APP_NAME="tutanota-desktop-linux.AppImage"
-INSTALL_ROOT="$HOME/opt"                        # Base directory for optional software
+APP_NAME="tuta_mail.appimage"
+INSTALL_ROOT="$HOME/Applications"               # Base directory for optional software
 INSTALL_DIR="$INSTALL_ROOT"                     # Directory for this specific app
 APP_PATH="$INSTALL_DIR/$APP_NAME"               # Full path to the executable
 DOWNLOAD_URL="https://app.tuta.com/desktop/tutanota-desktop-linux.AppImage"

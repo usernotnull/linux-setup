@@ -152,11 +152,6 @@ else
     fi
 fi
 
-# === POST-INSTALL ===
-
-# Lollypop: give access to music on cloud
-flatpak override org.gnome.Lollypop --filesystem=~/pCloudDrive
-
 # === FOOTER ===
 hr
 success "$ICON_SUCCESS" "Flatpak setup complete"
