@@ -1,18 +1,23 @@
 #!/bin/bash
 #==============================================================================
 # DESCRIPTION: Configure default file associations for media, text, email,
-#              and directory handling in KDE/Linux desktop environments
+#              directory handling, and custom MIME types in KDE/Linux desktop
+#              environments
 #
-# USAGE:       ./setup-mime-associations.sh
+# USAGE:       ./01-user-config.sh
 #
 # REQUIREMENTS:
 #   - xdg-utils (xdg-mime, xdg-settings)
 #   - gio command (typically from glib2)
+#   - update-mime-database (from shared-mime-info)
 #   - /usr/share/mime/types file must exist
-#   - Applications: Haruna (media), VS Code (text), Betterbird (email)
+#   - Applications: Haruna (media), VS Code (text), Betterbird (email),
+#                   JJazzLab (Band-in-a-Box, Impro-Visor, MusicXML files)
 #
 # NOTES:
 #   - Modifies ~/.config/mimeapps.list
+#   - Creates custom MIME types for Band-in-a-Box (.sgu/.mgu) and Impro-Visor (.ls)
+#   - Associates MusicXML files (.mxl/.musicxml) with JJazzLab
 #   - Sets system-wide default applications
 #   - Requires the target applications to be installed
 #==============================================================================
@@ -26,6 +31,12 @@ VIDEO_PLAYER="org.kde.haruna.desktop"    # Default video/audio player
 TEXT_EDITOR="code.desktop"               # Default text editor
 EMAIL_CLIENT="eu.betterbird.Betterbird.desktop"  # Default email client
 DIR_HANDLERS="code.desktop;org.kde.haruna.desktop;"  # Apps for opening directories
+JJAZZLAB_APP="jjazzlab.desktop"   # JJazzLab application handler
+
+# Custom MIME types for JJazzLab
+BIAB_MIME_TYPE="application/x-band-in-a-box"      # Band-in-a-Box files (.sgu/.mgu)
+IMPROVISOR_MIME_TYPE="application/x-impro-visor"  # Impro-Visor files (.ls)
+MUSICXML_MIME_TYPE="application/vnd.recordare.musicxml+xml"  # MusicXML (.mxl/.musicxml)
 
 # === HELPER FUNCTIONS ===
 if [ -f "$HOME/.bash_utils" ]; then
@@ -39,6 +50,7 @@ ICON_MEDIA="🎬"
 ICON_TEXT="📝"
 ICON_EMAIL="✉️"
 ICON_LINK="🔗"
+ICON_MUSIC="🎵"
 
 # === HEADER ===
 hr
@@ -46,6 +58,7 @@ log "$ICON_START" "Configuring MIME Type Associations"
 info "$ICON_MEDIA" "Media player: $VIDEO_PLAYER"
 info "$ICON_TEXT" "Text editor: $TEXT_EDITOR"
 info "$ICON_EMAIL" "Email client: $EMAIL_CLIENT"
+info "$ICON_MUSIC" "Music file handler: $JJAZZLAB_APP"
 hr
 echo
 
@@ -54,6 +67,7 @@ echo
 command -v xdg-mime >/dev/null 2>&1 || die "xdg-mime command not found (install xdg-utils)"
 command -v xdg-settings >/dev/null 2>&1 || die "xdg-settings command not found (install xdg-utils)"
 command -v gio >/dev/null 2>&1 || die "gio command not found (install glib2)"
+command -v update-mime-database >/dev/null 2>&1 || die "update-mime-database command not found (install shared-mime-info)"
 
 # Check for MIME types file
 [ -f "$MIME_TYPES_FILE" ] || die "MIME types file not found: $MIME_TYPES_FILE"
@@ -182,9 +196,89 @@ fi
 # Clean up any double semicolons
 sed -i 's/;;/;/g' "$MIMEAPPS_FILE"
 
+# 5. Configure Custom MIME Types for Music Files
+log "$ICON_MUSIC" "Registering music file types for JJazzLab…"
+
+# Create user MIME packages directory
+MIME_PACKAGES_DIR="$HOME/.local/share/mime/packages"
+MUSIC_MIME_FILE="$MIME_PACKAGES_DIR/jjazzlab-music.xml"
+
+mkdir -p "$MIME_PACKAGES_DIR" || die "Failed to create MIME packages directory"
+
+# Create comprehensive MIME type definition for all JJazzLab-supported formats
+cat > "$MUSIC_MIME_FILE" << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <!-- Band-in-a-Box Files -->
+  <mime-type type="application/x-band-in-a-box">
+    <comment>Band-in-a-Box Song File</comment>
+    <glob pattern="*.sgu"/>
+    <glob pattern="*.SGU"/>
+    <glob pattern="*.mgu"/>
+    <glob pattern="*.MGU"/>
+  </mime-type>
+
+  <!-- Impro-Visor Files -->
+  <mime-type type="application/x-impro-visor">
+    <comment>Impro-Visor Leadsheet</comment>
+    <glob pattern="*.ls"/>
+    <glob pattern="*.LS"/>
+  </mime-type>
+
+  <!-- MusicXML Files -->
+  <mime-type type="application/vnd.recordare.musicxml+xml">
+    <comment>MusicXML Document</comment>
+    <glob pattern="*.musicxml"/>
+    <glob pattern="*.MUSICXML"/>
+    <glob pattern="*.mxl"/>
+    <glob pattern="*.MXL"/>
+    <sub-class-of type="application/xml"/>
+  </mime-type>
+</mime-info>
+EOF
+
+if [ $? -eq 0 ]; then
+    success "$ICON_MUSIC" "Created MIME type definitions: $MUSIC_MIME_FILE"
+else
+    die "Failed to create MIME type definitions"
+fi
+
+# Update MIME database
+log "$ICON_MUSIC" "Updating MIME database…"
+if update-mime-database "$HOME/.local/share/mime" 2>/dev/null; then
+    success "$ICON_MUSIC" "MIME database updated successfully"
+else
+    warn "Failed to update MIME database (associations may not work immediately)"
+fi
+
+# Associate all MIME types with JJazzLab
+music_associations=0
+for mime_type in "$BIAB_MIME_TYPE" "$IMPROVISOR_MIME_TYPE" "$MUSICXML_MIME_TYPE"; do
+    if xdg-mime default "$JJAZZLAB_APP" "$mime_type" 2>/dev/null; then
+        music_associations=$((music_associations + 1))
+    else
+        warn "Failed to associate $mime_type with $JJAZZLAB_APP"
+    fi
+done
+
+if [ "$music_associations" -gt 0 ]; then
+    success "$ICON_MUSIC" "Associated $music_associations music file type(s) with JJazzLab"
+    info "$ICON_MUSIC" "Supported formats: .sgu/.mgu (BIAB), .ls (Impro-Visor), .mxl/.musicxml (MusicXML)"
+else
+    warn "Failed to associate music files with $JJAZZLAB_APP"
+    warn "Ensure $JJAZZLAB_APP is installed in /usr/share/applications or ~/.local/share/applications"
+fi
+
 # === FOOTER ===
 echo
 hr
 success "$ICON_SUCCESS" "MIME type associations configured successfully"
 info "$ICON_LINK" "Configuration file: $MIMEAPPS_FILE"
+info "$ICON_MUSIC" "Music MIME types: $MUSIC_MIME_FILE"
+echo
+info "📋" "Summary of configured associations:"
+info "   • Media files: $media_count types → $VIDEO_PLAYER"
+info "   • Text files: $text_count types → $TEXT_EDITOR"
+info "   • Email/Calendar: $email_count types → $EMAIL_CLIENT"
+info "   • Music files: $music_associations types → $JJAZZLAB_APP"
 hr

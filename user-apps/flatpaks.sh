@@ -45,6 +45,7 @@ APP_IDS=(
     "io.github.gillesdegottex.FMIT"
     "com.github.tchx84.Flatseal"
     "eu.betterbird.Betterbird"
+    "io.github.tobagin.tempo"
 )
 
 REMOTE_NAME="flathub"
