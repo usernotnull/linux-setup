@@ -46,6 +46,10 @@ APP_IDS=(
     "com.github.tchx84.Flatseal"
     "eu.betterbird.Betterbird"
     "io.github.tobagin.tempo"
+    "io.github.seadve.Kooha"
+    "dev.heppen.webapps"
+    "org.kde.kdenlive"
+    "com.obsproject.Studio"
 )
 
 REMOTE_NAME="flathub"
