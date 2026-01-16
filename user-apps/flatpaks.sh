@@ -50,6 +50,8 @@ APP_IDS=(
     "dev.heppen.webapps"
     "org.kde.kdenlive"
     "com.obsproject.Studio"
+    "org.kde.haruna"
+    "dev.edfloreshz.CosmicTweaks"
 )
 
 REMOTE_NAME="flathub"
