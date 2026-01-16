@@ -97,7 +97,6 @@ USER_MODULES_DIR="$(dirname "$SCRIPT_PATH")/user-apps"
 # === MAIN LOGIC ===
 
 # --- 0. Ask User About SSH/Dotfiles Setup ---
-echo
 read -r -p "Set up SSH keys and dotfiles? [Y/n]: " SETUP_SSH_DOTFILES
 SETUP_SSH_DOTFILES="${SETUP_SSH_DOTFILES:-Y}"  # Default to Yes
 echo
@@ -306,6 +305,7 @@ else
             [ -f "$MODULE_PATH" ] || continue
 
             MODULE_NAME=$(basename "$MODULE_PATH")
+            echo
             info "🚀" "Executing: $MODULE_NAME"
 
             if bash "$MODULE_PATH"; then

@@ -20,6 +20,7 @@ set -euo pipefail
 INSTALL_URL="https://micro.mamba.pm/install.sh"
 MICROMAMBA_BIN="$HOME/.local/bin/micromamba"
 TEMP_INSTALLER=""
+PACKAGE_NAME="micromamba"
 
 # === HELPER FUNCTIONS ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -34,6 +35,7 @@ fi
 
 ICON_SNAKE="🐍"
 ICON_DOWNLOAD="⬇️"
+ICON_WARN="⚠️"
 
 # === CLEANUP ===
 cleanup() {
@@ -52,6 +54,15 @@ hr
 echo
 
 # === VALIDATIONS ===
+printf "Install $PACKAGE_NAME? [y/N]: "
+read -r confirm
+echo
+
+if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+    log "$ICON_WARN" "Restore cancelled by user"
+    exit 0
+fi
+
 command -v curl >/dev/null 2>&1 || die "curl is required but not installed."
 command -v bash >/dev/null 2>&1 || die "bash is required but not installed."
 

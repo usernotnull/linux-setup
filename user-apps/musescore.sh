@@ -23,6 +23,7 @@ GITHUB_REPO="musescore/MuseScore"                   # GitHub repository
 INSTALL_DIR="$HOME/Applications"                    # Where to install the AppImage
 APP_NAME="MuseScore-Studio"                         # Base name for the AppImage
 SEARCH_PATTERN="musescore_studio"                   # Pattern to detect existing installation
+PACKAGE_NAME="musescore"
 
 # === HELPER FUNCTIONS ===
 if [ -f "$HOME/.bash_utils" ]; then
@@ -38,6 +39,7 @@ ICON_PACKAGE="📦"
 ICON_VERSION="🏷️"
 ICON_SKIP="⏭️"
 ICON_MUSIC="🎵"
+ICON_WARN="⚠️"
 
 # === HEADER ===
 hr
@@ -47,6 +49,14 @@ hr
 echo
 
 # === VALIDATIONS ===
+printf "Install $PACKAGE_NAME? [y/N]: "
+read -r confirm
+echo
+
+if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+    log "$ICON_WARN" "Restore cancelled by user"
+    exit 0
+fi
 
 # Check for required commands
 if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then

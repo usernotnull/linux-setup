@@ -39,6 +39,7 @@ ICON_PACKAGE="📦"
 ICON_VERSION="🏷️"
 ICON_SKIP="⏭️"
 ICON_INSTALL="🚀"
+ICON_WARN="⚠️"
 
 # === HEADER ===
 hr
@@ -48,6 +49,15 @@ hr
 echo
 
 # === VALIDATIONS ===
+printf "Install $PACKAGE_NAME? [y/N]: "
+read -r confirm
+echo
+
+if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+    log "$ICON_WARN" "Restore cancelled by user"
+    exit 0
+fi
+
 log "$ICON_CHECK" "Checking system requirements..."
 
 # Check for required commands
