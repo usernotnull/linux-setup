@@ -20,38 +20,55 @@ set -euo pipefail
 # === CONFIGURATION ===
 # List of Flatpak Application IDs to install
 APP_IDS=(
-    "io.github.plrigaux.sysd-manager"
-    "org.audacityteam.Audacity"
-    "md.obsidian.Obsidian"
-    "org.qbittorrent.qBittorrent"
-    "com.github.dynobo.normcap"
-    "com.bitwarden.desktop"
-    "org.freeplane.App"
-    "org.cryptomator.Cryptomator"
-    "org.gnome.meld"
-    "org.gimp.GIMP"
-    "org.kde.krita"
-    "org.kde.digikam"
-    "com.belmoussaoui.Decoder"
+    # --- Development ---
     "com.getpostman.Postman"
-    "fr.handbrake.ghb"
-    "io.github.alainm23.planify"
-    "org.kde.kclock"
-    "io.missioncenter.MissionCenter"
     "io.dbeaver.DBeaverCommunity"
-    "org.gnome.Calculator"
-    "it.mijorus.gearlever"
+
+    # --- Graphics & Design ---
     "it.mijorus.smile"
-    "io.github.gillesdegottex.FMIT"
-    "com.github.tchx84.Flatseal"
+    "org.gimp.GIMP"
+    "org.kde.digikam"
+    "org.kde.krita"
+
+    # --- Internet & Communication ---
     "eu.betterbird.Betterbird"
-    "io.github.tobagin.tempo"
-    "io.github.seadve.Kooha"
-    "dev.heppen.webapps"
-    "org.kde.kdenlive"
+    "org.qbittorrent.qBittorrent"
+
+    # --- Media & Audio ---
+    "fr.handbrake.ghb"
     "com.obsproject.Studio"
+    "org.audacityteam.Audacity"
     "org.kde.haruna"
+
+    # --- Music Practice & Performance ---
+    "io.github.gillesdegottex.FMIT"
+    "io.github.tobagin.tempo"
+    "org.rncbc.qpwgraph"
+
+    # --- Productivity & Office ---
+    "dev.heppen.webapps"
+    "io.github.alainm23.planify"
+    "md.obsidian.Obsidian"
+    "org.freeplane.App"
+    "org.kde.kclock"
+
+    # --- Security ---
+    "com.bitwarden.desktop"
+    "org.cryptomator.Cryptomator"
+
+    # --- System ---
+    "com.github.tchx84.Flatseal"
     "dev.edfloreshz.CosmicTweaks"
+    "io.github.plrigaux.sysd-manager"
+    "io.missioncenter.MissionCenter"
+    "it.mijorus.gearlever"
+
+    # --- Utilities ---
+    "com.belmoussaoui.Decoder"
+    "com.github.dynobo.normcap"
+    "io.github.seadve.Kooha"
+    "org.gnome.Calculator"
+    "org.gnome.meld"
 )
 
 REMOTE_NAME="flathub"

@@ -20,7 +20,6 @@ apt install -y \
   btop \
   workrave \
   ffmpeg \
-  qpwgraph \
   zstd \
   pv \
   sqlite3 \
