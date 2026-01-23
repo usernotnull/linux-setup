@@ -18,10 +18,8 @@ apt install -y \
   ufw \
   eza \
   btop \
-  workrave \
   ffmpeg \
   zstd \
-  pv \
   sqlite3 \
   imagemagick \
   fonts-noto-color-emoji \
@@ -30,9 +28,9 @@ apt install -y \
 
 echo "Core packages installation complete."
 
+  # workrave \
   # nvidia-cuda-toolkit \
   # nvidia-cudnn \
-  #  ibus-typing-booster \
-  #  tlp \
+  # ibus-typing-booster \
+  # tlp \
   # gparted \
-  # htop \

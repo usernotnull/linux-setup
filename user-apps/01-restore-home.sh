@@ -18,7 +18,6 @@
 #
 # REQUIREMENTS:
 #   - zstd, tar, sqlite3
-#   - Optional: pv (for progress bars)
 #   - .bash_utils helper library
 #==============================================================================
 
@@ -309,11 +308,7 @@ restore_backup() {
     local start_time
     start_time=$(date +%s)
 
-    if command_exists pv; then
-        zstd -d -c "$archive" 2>/dev/null | pv -N "Extracting" | tar -xf - -C "$temp_extract_dir" 2>/dev/null
-    else
-        zstd -d -c "$archive" 2>/dev/null | tar -xf - -C "$temp_extract_dir" 2>/dev/null
-    fi
+    zstd -d -c "$archive" 2>/dev/null | tar -xf - -C "$temp_extract_dir" 2>/dev/null
 
     local end_time
     end_time=$(date +%s)
@@ -426,7 +421,6 @@ echo
 command_exists tar || die "tar is not installed"
 command_exists zstd || die "zstd is not installed. Install with: sudo apt install zstd"
 command_exists sqlite3 || die "sqlite3 is not installed. Install with: sudo apt install sqlite3"
-command_exists pv || log "$ICON_WARN" "pv not installed (progress bars disabled). Install with: sudo apt install pv"
 
 # Check if backup root exists with retry option
 while [ ! -d "$BACKUP_ROOT_DIR" ]; do

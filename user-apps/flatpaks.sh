@@ -21,14 +21,16 @@ set -euo pipefail
 # List of Flatpak Application IDs to install
 APP_IDS=(
     # --- Development ---
-    "com.getpostman.Postman"
-    "io.dbeaver.DBeaverCommunity"
+    # "com.getpostman.Postman"
+    # "io.dbeaver.DBeaverCommunity"
+    # "org.gnome.meld"
 
     # --- Graphics & Design ---
     "it.mijorus.smile"
-    "org.gimp.GIMP"
+    # "org.gimp.GIMP"
     "org.kde.digikam"
-    "org.kde.krita"
+    # "org.kde.krita"
+    "io.freetubeapp.FreeTube"
 
     # --- Internet & Communication ---
     "eu.betterbird.Betterbird"
@@ -36,8 +38,8 @@ APP_IDS=(
 
     # --- Media & Audio ---
     "fr.handbrake.ghb"
-    "com.obsproject.Studio"
-    "org.audacityteam.Audacity"
+    # "com.obsproject.Studio"
+    # "org.audacityteam.Audacity"
     "org.kde.haruna"
 
     # --- Music Practice & Performance ---
@@ -49,7 +51,7 @@ APP_IDS=(
     "dev.heppen.webapps"
     "io.github.alainm23.planify"
     "md.obsidian.Obsidian"
-    "org.freeplane.App"
+    # "org.freeplane.App"
     "org.kde.kclock"
 
     # --- Security ---
@@ -68,7 +70,6 @@ APP_IDS=(
     "com.github.dynobo.normcap"
     "io.github.seadve.Kooha"
     "org.gnome.Calculator"
-    "org.gnome.meld"
 )
 
 REMOTE_NAME="flathub"
