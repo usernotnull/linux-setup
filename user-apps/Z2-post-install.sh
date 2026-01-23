@@ -8,13 +8,10 @@ SSH_KEY_PATH="${HOME}/.ssh/id_ed25519"                      # SSH key file path
 BACKUP_DIR="${HOME}/dotfiles_backup_$(date +%Y%m%d_%H%M%S)" # Backup directory for existing configs
 
 # === HELPER FUNCTIONS ===
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-UTILS_PATH="${SCRIPT_DIR}/.bash_utils"
-
-if [[ -f "$UTILS_PATH" ]]; then
-    source "$UTILS_PATH"
+if [ -f "$HOME/.bash_utils" ]; then
+    source "$HOME/.bash_utils"
 else
-    echo "❌ Error: .bash_utils not found at $UTILS_PATH"
+    echo "Error: .bash_utils not found!"
     exit 1
 fi
 
@@ -42,6 +39,11 @@ trap cleanup_ssh_agent EXIT
 hr
 log "$ICON_MANUAL" "Post-Install Manual Configuration"
 hr
+
+# Restore Home
+warn "ACTION REQUIRED: Restore Home"
+echo "To restore home directory, in another terminal, run: home-restore"
+wait_for_user
 
 # SyncThing
 warn "ACTION REQUIRED: SyncThing"
