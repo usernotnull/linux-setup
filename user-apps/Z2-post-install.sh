@@ -45,6 +45,13 @@ warn "ACTION REQUIRED: Restore Home"
 echo "To restore home directory, in another terminal, run: home-restore"
 wait_for_user
 
+# Espanso Configuration
+warn "ACTION REQUIRED: Espanso"
+echo "Run the following command in another terminal:"
+printf "${CYAN}>>> espanso service register && espanso start${NC}\n"
+read -r -p "Press [ENTER] when done..." _
+echo
+
 # SyncThing
 warn "ACTION REQUIRED: SyncThing"
 echo "URL: http://127.0.0.1:8384/"

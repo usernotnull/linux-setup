@@ -21,7 +21,7 @@ set -euo pipefail
 # === CONFIGURATION ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODULES_DIR="$SCRIPT_DIR/modules-system"
-INTERACTIVE_MODE=true           # Set to false to skip end-of-script prompts
+INTERACTIVE_MODE=true # Set to false to skip end-of-script prompts
 
 # === HELPER FUNCTIONS ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -103,13 +103,6 @@ if [ "$INTERACTIVE_MODE" = true ]; then
     echo "1. Open Brave"
     echo "2. Go to Settings > Sync"
     echo "3. Complete setup"
-    read -r -p "Press [ENTER] when done..." _
-    echo
-
-    # Espanso Configuration
-    warn "ACTION REQUIRED: Espanso"
-    echo "Run the following command in another terminal:"
-    printf "${CYAN}>>> espanso service register && espanso start${NC}\n"
     read -r -p "Press [ENTER] when done..." _
     echo
 
