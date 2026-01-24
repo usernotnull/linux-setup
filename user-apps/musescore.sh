@@ -19,10 +19,10 @@
 set -euo pipefail
 
 # === CONFIGURATION ===
-GITHUB_REPO="musescore/MuseScore"                   # GitHub repository
-INSTALL_DIR="$HOME/Applications"                    # Where to install the AppImage
-APP_NAME="MuseScore-Studio"                         # Base name for the AppImage
-SEARCH_PATTERN="musescore_studio"                   # Pattern to detect existing installation
+GITHUB_REPO="musescore/MuseScore" # GitHub repository
+INSTALL_DIR="$HOME/AppImages"     # Where to install the AppImage
+APP_NAME="MuseScore-Studio"       # Base name for the AppImage
+SEARCH_PATTERN="musescore_studio" # Pattern to detect existing installation
 PACKAGE_NAME="musescore"
 
 # === HELPER FUNCTIONS ===
@@ -117,7 +117,7 @@ while IFS= read -r line; do
         DOWNLOAD_URL="${BASH_REMATCH[1]}"
         break
     fi
-done <<< "$RELEASE_JSON"
+done <<<"$RELEASE_JSON"
 
 if [ -z "$DOWNLOAD_URL" ]; then
     die "Could not find AppImage download URL for x86_64 architecture"

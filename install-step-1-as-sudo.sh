@@ -21,7 +21,6 @@ set -euo pipefail
 # === CONFIGURATION ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODULES_DIR="$SCRIPT_DIR/modules-system"
-INTERACTIVE_MODE=true # Set to false to skip end-of-script prompts
 
 # === HELPER FUNCTIONS ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -57,57 +56,43 @@ trap 'echo; warn "Installation interrupted by user."; exit 130' INT
 
 # === MAIN LOGIC ===
 
-# 1. Update Package Lists
-info "🔄" "Updating APT package lists..."
-if apt update -qq; then
-    success "$ICON_SUCCESS" "Package lists updated."
-else
-    warn "APT update returned a non-zero exit code. Proceeding, but errors may occur."
-fi
-echo
+# Read all module paths into an array first
+mapfile -t -d '' modules < <(find "$MODULES_DIR" -maxdepth 1 -type f -name "*.sh" -print0 | sort -z)
 
-# 2. Execute Modules
-log "$ICON_START" "Starting modular installation..."
-
-# Use process substitution to avoid subshell variable scope issues
-# find -print0 | sort -z handles filenames with spaces/newlines correctly
-while IFS= read -r -d '' module; do
+# Now iterate without stdin redirection conflicts
+for module in "${modules[@]}"; do
     module_name=$(basename "$module")
 
     hr
     info "▶️" "Executing module: $module_name"
 
-    # Execute the module script in a new bash process
-    # Passing the environment ensures variables/functions don't bleed unexpectedly
+    # Execute the module script - stdin is now available for interactive prompts
     if bash "$module"; then
         success "$ICON_SUCCESS" "Module $module_name completed successfully."
     else
         die "Module $module_name failed. Aborting installation."
     fi
-
-done < <(find "$MODULES_DIR" -maxdepth 1 -type f -name "*.sh" -print0 | sort -z)
+done
 
 echo
 success "$ICON_SUCCESS" "All automated modules finished!"
 
-# 3. Post-Install Interactive Configurations
-if [ "$INTERACTIVE_MODE" = true ]; then
-    echo
-    hr
-    log "📦" "Post-install INTERACTIVE configurations"
-    hr
-    echo
+# Post-Install Interactive Configurations
+echo
+hr
+log "📦" "Post-install INTERACTIVE configurations"
+hr
+echo
 
-    # Brave Configuration
-    warn "ACTION REQUIRED: Brave Browser"
-    echo "1. Open Brave"
-    echo "2. Go to Settings > Sync"
-    echo "3. Complete setup"
-    read -r -p "Press [ENTER] when done..." _
-    echo
+# Brave Configuration
+warn "ACTION REQUIRED: Brave Browser"
+echo "1. Open Brave"
+echo "2. Go to Settings > Sync"
+echo "3. Complete setup"
+read -r -p "Press [ENTER] when done..." _
+echo
 
-    success "$ICON_SUCCESS" "Interactive configuration steps completed."
-fi
+success "$ICON_SUCCESS" "Interactive configuration steps completed."
 
 # === FOOTER ===
 hr

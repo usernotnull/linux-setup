@@ -19,11 +19,11 @@
 set -euo pipefail
 
 # === CONFIGURATION ===
-BASE_DIR="${HOME}/GitHub"                                      # Base directory for repositories
-DOTFILES_DIR="${BASE_DIR}/dotfiles"                            # Dotfiles repository location
-REPO_URL="git@github.com:usernotnull/dotfiles.git"             # GitHub repository URL
-SSH_KEY_PATH="${HOME}/.ssh/id_ed25519"                         # SSH key file path
-BACKUP_DIR="${HOME}/dotfiles_backup_$(date +%Y%m%d_%H%M%S)"   # Backup directory for existing configs
+BASE_DIR="${HOME}/GitHub"                                   # Base directory for repositories
+DOTFILES_DIR="${BASE_DIR}/dotfiles"                         # Dotfiles repository location
+REPO_URL="git@github.com:usernotnull/dotfiles.git"          # GitHub repository URL
+SSH_KEY_PATH="${HOME}/.ssh/id_ed25519"                      # SSH key file path
+BACKUP_DIR="${HOME}/dotfiles_backup_$(date +%Y%m%d_%H%M%S)" # Backup directory for existing configs
 
 # === HELPER FUNCTIONS ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -98,7 +98,7 @@ USER_MODULES_DIR="$(dirname "$SCRIPT_PATH")/user-apps"
 
 # --- 0. Ask User About SSH/Dotfiles Setup ---
 read -r -p "Set up SSH keys and dotfiles? [Y/n]: " SETUP_SSH_DOTFILES
-SETUP_SSH_DOTFILES="${SETUP_SSH_DOTFILES:-Y}"  # Default to Yes
+SETUP_SSH_DOTFILES="${SETUP_SSH_DOTFILES:-Y}" # Default to Yes
 echo
 
 if [[ ! "$SETUP_SSH_DOTFILES" =~ ^[Yy]$ ]]; then
@@ -273,7 +273,7 @@ if [[ "$SETUP_SSH_DOTFILES" =~ ^[Yy]$ ]]; then
 
                 # Report results in subshell, will be visible in parent
                 if [ "$stow_count" -gt 0 ]; then
-                    echo  # For clean output
+                    echo # For clean output
                     success "$ICON_SUCCESS" "Successfully stowed $stow_count configuration(s)"
                 fi
 
@@ -328,42 +328,6 @@ else
         info "$ICON_SEARCH" "No .sh modules found in $USER_MODULES_DIR"
     fi
 fi
-
-# --- 6. Manual Interactive Steps ---
-hr
-log "$ICON_MANUAL" "Post-Install Manual Configuration"
-hr
-
-# WhatsApp
-warn "ACTION REQUIRED: WhatsApp Web"
-echo "URL: https://web.whatsapp.com/"
-echo "Task: Install as PWA (Chrome/Brave/Edge)"
-wait_for_user
-
-# SyncThing
-warn "ACTION REQUIRED: SyncThing"
-echo "URL: http://127.0.0.1:8384/"
-echo "Task: 1. Enable ONLY local discovery"
-echo "      2. Add devices (tcp://x.x.x.x:22000)"
-wait_for_user
-
-# pCloud
-warn "ACTION REQUIRED: pCloud"
-echo "URL: https://www.pcloud.com/how-to-install-pcloud-drive-linux.html"
-echo "Task: Download AppImage -> chmod +x -> Run -> Login"
-wait_for_user
-
-# DNS
-warn "ACTION REQUIRED: AdGuard DNS"
-echo "Task: Open Network Settings -> IPv4/IPv6 Method: Automatic (DHCP)"
-echo "      IPv4 DNS    : 94.140.14.15, 94.140.15.16"
-echo "      IPv6 DNS    : 2a10:50c0::bad1:ff, 2a10:50c0::bad2:ff"
-echo
-echo "      Run         : sudo resolvectl flush-caches"
-echo "      Action      : Disconnect and Reconnect Internet"
-echo "      Test        : host pagead2.googlesyndication.com"
-echo "                    Should return 0.0.0.0"
-wait_for_user
 
 # === FOOTER ===
 hr
