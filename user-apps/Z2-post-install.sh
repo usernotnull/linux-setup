@@ -100,12 +100,6 @@ echo "URL       : https://gemini.google.com"
 echo "+---+"
 wait_for_user
 
-# WhatsApp
-warn "ACTION REQUIRED: WhatsApp Web"
-echo "URL: https://web.whatsapp.com/"
-echo "Task: Install as PWA (Chrome/Brave/Edge)"
-wait_for_user
-
 # Panel Applets
 warn "ACTION REQUIRED: SETTING → Panel Applets"
 echo "  Start segment →"
@@ -130,6 +124,10 @@ wait_for_user
 
 # Keyboard Shortcuts
 warn "ACTION REQUIRED: SETTING → Keyboard Shortcuts"
+echo "  Keyboard →"
+echo "      State on Boot: ON"
+echo "  Acccessibility →"
+echo "      Zoom in/out                                 : Remove ,."
 echo "  System →"
 echo "      Lock the screen                             : Disable"
 echo "      Take a Screenshot                           : SUPER+SHIFT+s"
@@ -143,18 +141,18 @@ echo "      flatpak run flatpak it.mijorus.smile        : Super+."
 echo "      systemctl poweroff                          : Super+ESC"
 wait_for_user
 
-# Touchpad
-warn "ACTION REQUIRED: SETTING → Touchpad"
-echo "  Touchpad Speed: 80"
-echo "  Scroll with 2 fingers"
-echo "  Scrolling Speed: 35"
-echo "  Natural Scrolling ON"
-wait_for_user
-
 # Mouse
 warn "ACTION REQUIRED: SETTING → Mouse"
 echo "  Mouse Speed: 57"
 echo "  Enable acceleration"
 echo "  Scrolling Speed: 50"
 echo "  Natural Scrolling OFF"
+wait_for_user
+
+# Touchpad
+warn "ACTION REQUIRED: SETTING → Touchpad"
+echo "  Touchpad Speed: 80"
+echo "  Scroll with 2 fingers"
+echo "  Scrolling Speed: 35"
+echo "  Natural Scrolling ON"
 wait_for_user
