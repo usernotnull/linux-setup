@@ -41,6 +41,7 @@ APP_IDS=(
     # "com.obsproject.Studio"
     # "org.audacityteam.Audacity"
     "org.kde.haruna"
+    "org.gnome.Rhythmbox3"
 
     # --- Music Practice & Performance ---
     "io.github.gillesdegottex.FMIT"
