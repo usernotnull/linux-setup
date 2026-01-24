@@ -58,6 +58,11 @@ echo "URL: https://www.pcloud.com/how-to-install-pcloud-drive-linux.html"
 echo "Task: Download AppImage -> chmod +x -> Run -> Login"
 wait_for_user
 
+# pCloud Links
+warn "ACTION REQUIRED: pCloud Symlinks"
+echo "RUN: ln -s /home/john/pCloudDrive/Music/ ~/Music/cloud"
+wait_for_user
+
 # DNS
 warn "ACTION REQUIRED: AdGuard DNS"
 echo "Task: Open Network Settings -> IPv4/IPv6 Method: Automatic (DHCP)"

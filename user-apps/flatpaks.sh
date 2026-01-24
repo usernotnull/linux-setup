@@ -49,10 +49,11 @@ APP_IDS=(
 
     # --- Productivity & Office ---
     "dev.heppen.webapps"
-    "io.github.alainm23.planify"
+    # "io.github.alainm23.planify"
     "md.obsidian.Obsidian"
     # "org.freeplane.App"
     "org.kde.kclock"
+    "com.super_productivity.SuperProductivity"
 
     # --- Security ---
     "com.bitwarden.desktop"
