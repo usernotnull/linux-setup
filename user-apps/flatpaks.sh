@@ -3,102 +3,122 @@
 # DESCRIPTION: Installs required Flatpak applications with idempotency.
 #              Checks for existing installs before attempting installation.
 #
-# USAGE:       ./install-flatpaks.sh
+# USAGE:       ./flatpaks.sh
 #
 # REQUIREMENTS:
 #   - flatpak command must be available
 #   - Internet connection
+#   - $HOME/.bash_utils helper functions file
 #
 # NOTES:
 #   - Installs applications in USER scope (--user)
 #   - Adds Flathub remote if missing
 #   - Uses batch installation for better dependency resolution and speed
+#   - Press Ctrl+C to cancel at any time
 #==============================================================================
 
 set -euo pipefail
 
 # === CONFIGURATION ===
-# List of Flatpak Application IDs to install
+# List of Flatpak Application IDs to install (default)
 APP_IDS=(
-    # --- Development ---
-    # "com.getpostman.Postman"
-    # "io.dbeaver.DBeaverCommunity"
-    # "org.gnome.meld"
-
     # --- Graphics & Design ---
-    "it.mijorus.smile"
-    # "org.gimp.GIMP"
-    "org.kde.digikam"
-    # "org.kde.krita"
-    "io.freetubeapp.FreeTube"
+    "it.mijorus.smile"        # Emoji picker
+    "org.kde.digikam"         # Photo management
+    "io.freetubeapp.FreeTube" # YouTube client
 
     # --- Internet & Communication ---
-    "eu.betterbird.Betterbird"
-    "org.qbittorrent.qBittorrent"
+    "eu.betterbird.Betterbird"    # Email client
+    "org.qbittorrent.qBittorrent" # Torrent client
 
     # --- Media & Audio ---
-    "fr.handbrake.ghb"
-    # "com.obsproject.Studio"
-    # "org.audacityteam.Audacity"
-    "org.kde.haruna"
-    "org.gnome.Rhythmbox3"
+    "fr.handbrake.ghb"     # Video transcoder
+    "org.kde.haruna"       # Video player
+    "org.gnome.Rhythmbox3" # Music player
 
     # --- Music Practice & Performance ---
-    "io.github.gillesdegottex.FMIT"
-    "io.github.tobagin.tempo"
-    "org.rncbc.qpwgraph"
+    "io.github.gillesdegottex.FMIT" # Musical instrument tuner
+    "io.github.tobagin.tempo"       # Metronome
+    "org.rncbc.qpwgraph"            # PipeWire graph manager
 
     # --- Productivity & Office ---
-    "dev.heppen.webapps"
-    # "io.github.alainm23.planify"
-    "md.obsidian.Obsidian"
-    # "org.freeplane.App"
-    "org.kde.kclock"
-    "com.super_productivity.SuperProductivity"
+    "dev.heppen.webapps"                       # Web app manager
+    "md.obsidian.Obsidian"                     # Note-taking app
+    "org.kde.kclock"                           # Clock and timer
+    "com.super_productivity.SuperProductivity" # Task manager
 
     # --- Security ---
-    "com.bitwarden.desktop"
-    "org.cryptomator.Cryptomator"
+    "com.bitwarden.desktop"       # Password manager
+    "org.cryptomator.Cryptomator" # File encryption
 
     # --- System ---
-    "com.github.tchx84.Flatseal"
-    "dev.edfloreshz.CosmicTweaks"
-    "io.github.plrigaux.sysd-manager"
-    "io.missioncenter.MissionCenter"
-    "it.mijorus.gearlever"
+    "com.github.tchx84.Flatseal"      # Flatpak permissions manager
+    "dev.edfloreshz.CosmicTweaks"     # COSMIC desktop tweaks
+    "io.github.plrigaux.sysd-manager" # Systemd manager
+    "io.missioncenter.MissionCenter"  # System monitor
+    "it.mijorus.gearlever"            # AppImage manager
 
     # --- Utilities ---
-    "com.belmoussaoui.Decoder"
-    "com.github.dynobo.normcap"
-    "io.github.seadve.Kooha"
-    "org.gnome.Calculator"
+    "com.belmoussaoui.Decoder"  # QR code scanner
+    "com.github.dynobo.normcap" # OCR screen capture
+    "io.github.seadve.Kooha"    # Screen recorder
+    "org.gnome.Calculator"      # Calculator
 )
 
-REMOTE_NAME="flathub"
-REMOTE_URL="https://dl.flathub.org/repo/flathub.flatpakrepo"
+# Optional Flatpak Application IDs (user will be prompted)
+OPTIONAL_APP_IDS=(
+    # --- Development ---
+    "com.getpostman.Postman"      # API testing tool
+    "io.dbeaver.DBeaverCommunity" # Database tool
+    "org.gnome.meld"              # File diff tool
+
+    # --- Graphics & Design ---
+    "org.gimp.GIMP" # Image editor
+    "org.kde.krita" # Digital painting
+
+    # --- Media & Audio ---
+    "com.obsproject.Studio"     # Streaming/recording
+    "org.audacityteam.Audacity" # Audio editor
+
+    # --- Productivity & Office ---
+    "io.github.alainm23.planify" # Task planner
+    "org.freeplane.App"          # Mind mapping
+)
+
+REMOTE_NAME="flathub"                                        # Flatpak repository name
+REMOTE_URL="https://dl.flathub.org/repo/flathub.flatpakrepo" # Repository URL
 
 # === HELPER FUNCTIONS ===
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-UTILS_PATH="$(cd "$SCRIPT_DIR/../" && pwd)/.bash_utils"
-
-if [[ -f "$UTILS_PATH" ]]; then
-    source "$UTILS_PATH"
+if [ -f "$HOME/.bash_utils" ]; then
+    source "$HOME/.bash_utils"
 else
-    echo "❌ Error: .bash_utils not found at $UTILS_PATH"
+    echo "Error: .bash_utils not found!"
     exit 1
 fi
 
 ICON_FLATPAK="📦"
 
+# Prompt user for optional app installation
+prompt_optional_app() {
+    local app_id="${1:-}"
+    local response
+
+    read -r -p "   Install $app_id? [y/N]: " response </dev/tty
+    [[ "$response" =~ ^[Yy]$ ]]
+}
+
 # === HEADER ===
 hr
 log "$ICON_START" "Starting Flatpak Application Installer"
-info "$ICON_FLATPAK" "Target applications: ${#APP_IDS[@]}"
+info "$ICON_FLATPAK" "Default applications: ${#APP_IDS[@]}"
+info "$ICON_FLATPAK" "Optional applications: ${#OPTIONAL_APP_IDS[@]}"
 hr
 echo
 
 # === VALIDATIONS ===
-command -v flatpak >/dev/null 2>&1 || die "Flatpak is not installed. Please install flatpak first."
+if ! command -v flatpak >/dev/null 2>&1; then
+    die "Flatpak is not installed. Please install flatpak first."
+fi
 
 # === MAIN LOGIC ===
 
@@ -106,16 +126,15 @@ command -v flatpak >/dev/null 2>&1 || die "Flatpak is not installed. Please inst
 # -----------------------------------------------------------------------------
 log "$ICON_FLATPAK" "Checking remote configuration..."
 
-# We use || true here because checks inside 'set -e' scripts can trigger exits
-if ! flatpak remote-list --user | grep -q "$REMOTE_NAME" 2>/dev/null; then
+if flatpak remote-list --user | grep "$REMOTE_NAME" >/dev/null 2>&1; then
+    success "$ICON_SUCCESS" "Remote '$REMOTE_NAME' already exists"
+else
     info "$ICON_FLATPAK" "Adding $REMOTE_NAME remote..."
-    if flatpak remote-add --user --if-not-exists "$REMOTE_NAME" "$REMOTE_URL"; then
+    if flatpak remote-add --user --if-not-exists "$REMOTE_NAME" "$REMOTE_URL" 2>&1; then
         success "$ICON_SUCCESS" "Remote added successfully"
     else
         die "Failed to add remote: $REMOTE_NAME"
     fi
-else
-    success "$ICON_SUCCESS" "Remote '$REMOTE_NAME' already exists"
 fi
 
 echo
@@ -124,36 +143,38 @@ echo
 # -----------------------------------------------------------------------------
 log "$ICON_SEARCH" "Checking installed applications..."
 
+# Read all apps into array for proper stdin handling during prompts
+mapfile -t apps_to_check < <(printf '%s\n' "${APP_IDS[@]}")
 to_install=()
 count=0
-total=${#APP_IDS[@]}
+total=${#apps_to_check[@]}
 
 # Trap SIGINT for the checking loop
 trap 'echo; warn "Interrupted by user during check. Exiting..."; exit 130' INT
 
-for app_id in "${APP_IDS[@]}"; do
+for app_id in "${apps_to_check[@]}"; do
     count=$((count + 1))
 
-    # Using printf for a cleaner update line (safe in batch scripts)
-    # \033[K clears the line to the right
+    # Display progress (clear to end of line)
     printf "\r   Checking %d/%d: %s\033[K" "$count" "$total" "$app_id"
 
-    # Check if installed (returns 0 if found, non-zero if not)
-    # Redirect output to void to keep console clean
-    if ! flatpak info "$app_id" >/dev/null 2>&1; then
+    # Check if installed
+    if flatpak info "$app_id" >/dev/null 2>&1; then
+        # Already installed, skip
+        :
+    else
         to_install+=("$app_id")
     fi
 done
-echo # Newline after the progress indicator
+echo # Newline after progress indicator
 
 # 3. Batch Installation
 # -----------------------------------------------------------------------------
-# Batching is preferred for performance (deduplicates shared runtimes)
 num_to_install=${#to_install[@]}
 
 if [ "$num_to_install" -eq 0 ]; then
     echo
-    success "$ICON_SUCCESS" "All applications are already installed!"
+    success "$ICON_SUCCESS" "All default applications are already installed!"
 else
     echo
     info "$ICON_FLATPAK" "Found $num_to_install application(s) to install."
@@ -169,8 +190,7 @@ else
     # Trap SIGINT during installation
     trap 'echo; warn "Interrupted by user during installation. Exiting..."; exit 130' INT
 
-    # We execute the install command with the array expanded
-    if flatpak install --user -y "$REMOTE_NAME" "${to_install[@]}"; then
+    if flatpak install --user -y "$REMOTE_NAME" "${to_install[@]}" 2>&1; then
         echo
         success "$ICON_SUCCESS" "Successfully installed $num_to_install application(s)"
     else
@@ -179,6 +199,43 @@ else
     fi
 fi
 
+# 4. Optional Applications
+# -----------------------------------------------------------------------------
+echo
+log "$ICON_FLATPAK" "Checking for optional applications..."
+echo
+
+# Read optional apps into array for proper stdin handling
+mapfile -t optional_apps < <(printf '%s\n' "${OPTIONAL_APP_IDS[@]}")
+optional_to_install=()
+
+for app_id in "${optional_apps[@]}"; do
+    if prompt_optional_app "$app_id"; then
+        optional_to_install+=("$app_id")
+    fi
+done
+
+if [ ${#optional_to_install[@]} -gt 0 ]; then
+    echo
+    log "$ICON_START" "Installing optional application(s)..."
+
+    # Trap SIGINT during installation
+    trap 'echo; warn "Interrupted by user during optional installation. Exiting..."; exit 130' INT
+
+    if flatpak install --user -y "$REMOTE_NAME" "${optional_to_install[@]}" 2>&1; then
+        echo
+        success "$ICON_SUCCESS" "Successfully installed ${#optional_to_install[@]} optional application(s)"
+    else
+        echo
+        die "Optional batch installation failed. Check internet connection or disk space."
+    fi
+else
+    echo
+    info "$ICON_FLATPAK" "No optional applications selected"
+fi
+
 # === FOOTER ===
+echo
 hr
 success "$ICON_SUCCESS" "Flatpak setup complete"
+hr
