@@ -24,7 +24,6 @@ set -euo pipefail
 APP_IDS=(
     # --- Graphics & Design ---
     "it.mijorus.smile"        # Emoji picker
-    "org.kde.digikam"         # Photo management
     "io.freetubeapp.FreeTube" # YouTube client
 
     # --- Internet & Communication ---
@@ -35,11 +34,6 @@ APP_IDS=(
     "fr.handbrake.ghb"     # Video transcoder
     "org.kde.haruna"       # Video player
     "org.gnome.Rhythmbox3" # Music player
-
-    # --- Music Practice & Performance ---
-    "io.github.gillesdegottex.FMIT" # Musical instrument tuner
-    "io.github.tobagin.tempo"       # Metronome
-    "org.rncbc.qpwgraph"            # PipeWire graph manager
 
     # --- Productivity & Office ---
     "dev.heppen.webapps"                       # Web app manager
@@ -73,12 +67,18 @@ OPTIONAL_APP_IDS=(
     "org.gnome.meld"              # File diff tool
 
     # --- Graphics & Design ---
-    "org.gimp.GIMP" # Image editor
-    "org.kde.krita" # Digital painting
+    "org.gimp.GIMP"   # Image editor
+    "org.kde.krita"   # Digital painting
+    "org.kde.digikam" # Photo management
 
     # --- Media & Audio ---
     "com.obsproject.Studio"     # Streaming/recording
     "org.audacityteam.Audacity" # Audio editor
+
+    # --- Music Practice & Performance ---
+    "io.github.gillesdegottex.FMIT" # Musical instrument tuner
+    "io.github.tobagin.tempo"       # Metronome
+    "org.rncbc.qpwgraph"            # PipeWire graph manager
 
     # --- Productivity & Office ---
     "io.github.alainm23.planify" # Task planner
