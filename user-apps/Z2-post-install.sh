@@ -40,9 +40,15 @@ hr
 log "$ICON_MANUAL" "Post-Install Manual Configuration"
 hr
 
+# pCloud
+warn "ACTION REQUIRED: pCloud"
+echo "URL: https://www.pcloud.com/how-to-install-pcloud-drive-linux.html"
+echo "Task: Download AppImage -> chmod +x -> Run -> Login"
+wait_for_user
+
 # Restore Home
 warn "ACTION REQUIRED: Restore Home"
-echo "To restore home directory, in another terminal, run: home-restore"
+echo "To restore home directory, in another terminal, run: home-backups → Restore"
 wait_for_user
 
 # Espanso Configuration
@@ -57,12 +63,6 @@ warn "ACTION REQUIRED: SyncThing"
 echo "URL: http://127.0.0.1:8384/"
 echo "Task: 1. Enable ONLY local discovery"
 echo "      2. Add devices (tcp://x.x.x.x:22000)"
-wait_for_user
-
-# pCloud
-warn "ACTION REQUIRED: pCloud"
-echo "URL: https://www.pcloud.com/how-to-install-pcloud-drive-linux.html"
-echo "Task: Download AppImage -> chmod +x -> Run -> Login"
 wait_for_user
 
 # pCloud Links
@@ -132,6 +132,7 @@ wait_for_user
 # Keyboard Shortcuts
 warn "ACTION REQUIRED: SETTING → Keyboard Shortcuts"
 echo "  Keyboard →"
+echo "      Compose Key: NONE"
 echo "      State on Boot: ON"
 echo "  Acccessibility →"
 echo "      Zoom in/out                                 : Remove ,."
@@ -162,4 +163,11 @@ echo "  Touchpad Speed: 80"
 echo "  Scroll with 2 fingers"
 echo "  Scrolling Speed: 35"
 echo "  Natural Scrolling ON"
+wait_for_user
+
+# Gnome Terminal
+warn "ACTION REQUIRED: Open Terminal → right-click, Settings"
+echo "  Font        : JetBrainsMono Nerd Font"
+echo "  Font Size   : 18px"
+echo "  Show Header : OFF"
 wait_for_user

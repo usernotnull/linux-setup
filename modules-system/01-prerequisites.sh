@@ -37,6 +37,8 @@ CORE_PACKAGES=(
   fonts-noto-color-emoji
   fonts-symbola
   ttf-bitstream-vera
+  yq
+  p7zip-full
 )
 
 # Optional NVIDIA packages
