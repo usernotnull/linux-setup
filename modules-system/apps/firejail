@@ -1,0 +1,117 @@
+#!/bin/bash
+#==============================================================================
+# DESCRIPTION: Installs Firejail, a SUID sandbox program that reduces the risk
+#              of security breaches by restricting running applications
+#
+# USAGE:       ./install-firejail.sh
+#
+# REQUIREMENTS:
+#   - add-apt-repository must be available (software-properties-common)
+#   - apt-get must be available (Debian-based systems)
+#   - sudo/root privileges for installation
+#   - Internet connection to access PPA and download packages
+#
+# NOTES:
+#   - Adds the official Firejail PPA (ppa:deki/firejail)
+#   - Installs both firejail and firejail-profiles packages
+#   - Updates package lists before installation
+#   - Firejail is a SUID program that provides application sandboxing
+#==============================================================================
+
+set -euo pipefail
+
+# === CONFIGURATION ===
+APP_PACKAGE="firejail"               # Main package name
+PROFILES_PACKAGE="firejail-profiles" # Profiles package name
+PPA_REPO="ppa:deki/firejail"         # PPA repository
+
+# === HELPER FUNCTIONS ===
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UTILS_PATH="$(cd "$SCRIPT_DIR/../../" && pwd)/.bash_utils"
+
+if [[ -f "$UTILS_PATH" ]]; then
+    source "$UTILS_PATH"
+else
+    echo "❌ Error: .bash_utils not found at $UTILS_PATH"
+    exit 1
+fi
+
+ICON_PACKAGE="📦"
+ICON_SHIELD="🛡️"
+ICON_REPO="📚"
+
+# === HEADER ===
+hr
+log "$ICON_START" "Starting Firejail installer"
+info "$ICON_SHIELD" "Purpose: Application sandboxing and security"
+info "$ICON_REPO" "Repository: $PPA_REPO"
+hr
+echo
+
+# === VALIDATIONS ===
+# Check for required commands
+command -v add-apt-repository >/dev/null 2>&1 || die "add-apt-repository is required (install software-properties-common)"
+command -v apt-get >/dev/null 2>&1 || die "apt-get is required (Debian-based system only)"
+
+# Check for sufficient privileges
+if [ "$EUID" -ne 0 ]; then
+    warn "This script requires root privileges for installation"
+    die "Please run with sudo: sudo $0"
+fi
+
+# === MAIN LOGIC ===
+
+# Check if already installed
+if dpkg -s "$APP_PACKAGE" >/dev/null 2>&1; then
+    INSTALLED_VERSION=$(dpkg -s "$APP_PACKAGE" 2>/dev/null | grep '^Version:' | awk '{print $2}' || echo "unknown")
+    info "$ICON_PACKAGE" "Firejail is already installed (version: $INSTALLED_VERSION)"
+
+    read -r -p "Reinstall or update Firejail? [y/N]: " response
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+        log "$ICON_SUCCESS" "Installation skipped"
+        exit 0
+    fi
+    echo
+fi
+
+# Add PPA repository
+log "$ICON_REPO" "Adding Firejail PPA repository..."
+if add-apt-repository -y "$PPA_REPO" >/dev/null 2>&1; then
+    success "$ICON_SUCCESS" "PPA repository added successfully"
+else
+    die "Failed to add PPA repository"
+fi
+
+# Update package lists
+log "$ICON_SEARCH" "Updating package lists..."
+if apt-get update >/dev/null 2>&1; then
+    success "$ICON_SUCCESS" "Package lists updated"
+else
+    warn "Failed to update package lists"
+fi
+
+# Install firejail and firejail-profiles
+log "$ICON_PACKAGE" "Installing $APP_PACKAGE and $PROFILES_PACKAGE..."
+if apt-get install -y "$APP_PACKAGE" "$PROFILES_PACKAGE" >/dev/null 2>&1; then
+    success "$ICON_SUCCESS" "Packages installed successfully"
+else
+    die "Failed to install packages"
+fi
+
+# Verify installation
+if command -v firejail >/dev/null 2>&1; then
+    INSTALLED_VERSION=$(firejail --version 2>/dev/null | head -n 1 | awk '{print $3}')
+    success "$ICON_SHIELD" "Firejail successfully installed (version: $INSTALLED_VERSION)"
+else
+    die "Installation completed but 'firejail' command not found"
+fi
+
+# === FOOTER ===
+echo
+hr
+success "$ICON_SUCCESS" "Firejail installation complete"
+info "💡" "Usage: firejail [options] program"
+info "🔒" "Example: firejail firefox"
+info "📋" "List profiles: firejail --list"
+info "📚" "Documentation: https://firejail.wordpress.com"
+hr
