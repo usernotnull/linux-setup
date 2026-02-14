@@ -57,6 +57,7 @@ APP_IDS=(
     "com.github.dynobo.normcap" # OCR screen capture
     "io.github.seadve.Kooha"    # Screen recorder
     "org.gnome.Calculator"      # Calculator
+    "org.localsend.localsend_app"
 )
 
 # Optional Flatpak Application IDs (user will be prompted)
