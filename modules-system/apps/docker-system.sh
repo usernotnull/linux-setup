@@ -264,9 +264,43 @@ if [ -S /var/run/docker.sock ]; then
 fi
 echo ""
 
+# === NVIDIA CONTAINER RUNTIME (ROOTLESS) ===
+# Rootless Docker uses a different cgroup hierarchy. The nvidia container runtime
+# must be told not to use cgroups (no-cgroups = true) so GPU access works without root.
+NVIDIA_CTK_CONFIG="/etc/nvidia/container-runtime/config.toml"
+
+if [ -f "$NVIDIA_CTK_CONFIG" ]; then
+    info "Configuring NVIDIA container runtime for rootless Docker..."
+
+    if grep -q "^no-cgroups" "$NVIDIA_CTK_CONFIG" >/dev/null 2>&1; then
+        # Already uncommented - check if it's already set to true
+        if grep -q "^no-cgroups = true" "$NVIDIA_CTK_CONFIG" >/dev/null 2>&1; then
+            success "NVIDIA: no-cgroups = true already set"
+        else
+            sed -i 's/^no-cgroups = false/no-cgroups = true/' "$NVIDIA_CTK_CONFIG"
+            success "NVIDIA: updated no-cgroups to true"
+        fi
+    elif grep -q "^#no-cgroups" "$NVIDIA_CTK_CONFIG" >/dev/null 2>&1; then
+        # Commented out - uncomment and set to true
+        sed -i 's/^#no-cgroups = false/no-cgroups = true/' "$NVIDIA_CTK_CONFIG"
+        success "NVIDIA: enabled no-cgroups = true (was commented out)"
+    else
+        # Key not present at all - append it
+        echo "no-cgroups = true" >>"$NVIDIA_CTK_CONFIG"
+        success "NVIDIA: appended no-cgroups = true to config"
+    fi
+
+    log_message "INFO: $NVIDIA_CTK_CONFIG updated for rootless Docker"
+else
+    warn "NVIDIA container runtime config not found at $NVIDIA_CTK_CONFIG - skipping (nvidia-container-toolkit may not be installed)"
+fi
+echo ""
+
 # === FOOTER ===
 gum style --border double --border-foreground 76 --padding "1 2" \
     "System setup complete!" \
+    "" \
+    "NVIDIA config.toml has been updated for rootless cgroup support." \
     "" \
     "Next: log in as your normal (non-root) user and run:" \
     "  ./install-docker-rootless.sh"

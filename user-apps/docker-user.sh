@@ -230,6 +230,36 @@ else
 fi
 echo ""
 
+# === NVIDIA CONTAINER RUNTIME (ROOTLESS) ===
+# Configure the NVIDIA runtime to use the user-level Docker daemon config,
+# then restart the daemon so the new runtime is picked up.
+NVIDIA_DOCKER_CONFIG="$HOME/.config/docker/daemon.json"
+
+if command -v nvidia-ctk >/dev/null 2>&1; then
+    info "Configuring NVIDIA container runtime for rootless Docker..."
+    echo ""
+
+    if gum spin --spinner dot \
+        --title "Running nvidia-ctk runtime configure..." -- \
+        nvidia-ctk runtime configure --runtime=docker --config="$NVIDIA_DOCKER_CONFIG"; then
+        success "NVIDIA runtime configured at $NVIDIA_DOCKER_CONFIG"
+    else
+        die "nvidia-ctk runtime configure failed. Check the output above for details."
+    fi
+    echo ""
+
+    if gum spin --spinner dot --title "Restarting rootless Docker daemon to apply NVIDIA config..." -- \
+        systemctl --user restart docker; then
+        success "Rootless Docker daemon restarted with NVIDIA runtime"
+    else
+        die "Failed to restart rootless Docker daemon. Check: journalctl --user -u docker"
+    fi
+    echo ""
+else
+    warn "nvidia-ctk not found - skipping NVIDIA runtime configuration (install nvidia-container-toolkit if needed)"
+    echo ""
+fi
+
 # === SHELL ENVIRONMENT HINT ===
 # Remind user to set DOCKER_HOST if they use a non-standard socket path
 current_shell_socket="${DOCKER_HOST:-}"
@@ -248,6 +278,9 @@ gum style --border double --border-foreground 76 --padding "1 2" \
     "" \
     "Verify your install:" \
     "  docker run hello-world" \
+    "" \
+    "Verify NVIDIA GPU access (if applicable):" \
+    "  docker run --rm --gpus all ubuntu nvidia-smi" \
     "" \
     "Manage your daemon:" \
     "  systemctl --user start|stop|status|restart docker" \
