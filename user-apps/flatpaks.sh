@@ -36,7 +36,6 @@ APP_IDS=(
     "org.gnome.Rhythmbox3" # Music player
 
     # --- Productivity & Office ---
-    "dev.heppen.webapps"                       # Web app manager
     "md.obsidian.Obsidian"                     # Note-taking app
     "org.kde.kclock"                           # Clock and timer
     "com.super_productivity.SuperProductivity" # Task manager
