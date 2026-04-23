@@ -57,6 +57,7 @@ APP_IDS=(
     "io.github.seadve.Kooha"    # Screen recorder
     "org.gnome.Calculator"      # Calculator
     "org.localsend.localsend_app"
+    "org.kde.krename"
 )
 
 # Optional Flatpak Application IDs (user will be prompted)
