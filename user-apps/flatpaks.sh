@@ -52,9 +52,7 @@ APP_IDS=(
     "it.mijorus.gearlever"            # AppImage manager
 
     # --- Utilities ---
-    "com.belmoussaoui.Decoder"  # QR code scanner
     "com.github.dynobo.normcap" # OCR screen capture
-    "io.github.seadve.Kooha"    # Screen recorder
     "org.gnome.Calculator"      # Calculator
     "org.localsend.localsend_app"
     "org.kde.krename"
@@ -74,16 +72,17 @@ OPTIONAL_APP_IDS=(
 
     # --- Media & Audio ---
     "com.obsproject.Studio"     # Streaming/recording
-    "org.audacityteam.Audacity" # Audio editor
+    # "io.github.seadve.Kooha"    # Screen recorder
+    # "org.audacityteam.Audacity" # Audio editor
 
     # --- Music Practice & Performance ---
     "io.github.gillesdegottex.FMIT" # Musical instrument tuner
     "io.github.tobagin.tempo"       # Metronome
-    "org.rncbc.qpwgraph"            # PipeWire graph manager
+    # "org.rncbc.qpwgraph"            # PipeWire graph manager
 
     # --- Productivity & Office ---
-    "io.github.alainm23.planify" # Task planner
-    "org.freeplane.App"          # Mind mapping
+    # "io.github.alainm23.planify" # Task planner
+    # "org.freeplane.App"          # Mind mapping
 )
 
 REMOTE_NAME="flathub"                                        # Flatpak repository name
